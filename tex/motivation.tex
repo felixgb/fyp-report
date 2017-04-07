@@ -2,11 +2,70 @@
 
 \section{Higher Kinded Types}
 
-\subsection{Parametric Polymorphism}
-generics are found in languages like java \\
-reducing code duplication \\
+\subsection{Parametric Polymorphism}\label{sec:generics}
+First order parametric polymorphism, know as Generics in Java, are types that 
+are parametrized over some other type. They used to write code that can be
+checked for safety at compile time. For example, without generics, a list could
+be used like:
 
-list example \\
+\begin{lstlisting}[caption=Runtime error that could be avoided, language=Java, label={lst:javaerr}]
+List l = new ArrayList();
+l.add("This is a string");
+Integer i = (Integer) l.get(0); // Run time error here
+\end{lstlisting}
+
+This is problematic because a list in Java can contain any type of object, but
+methods that the \lstinline{List} object provide must know about the type of
+object that the list contains. If those methods do not have a way of knowing
+what kind of object a list contains then calling the methods will not be type
+safe, as demonstrated in Listing~\ref{lst:javaerr}. The same code written with
+Java's Generics will produce a compile time error:
+
+\begin{lstlisting}[caption=Compile time error, language=Java, label={lst:generr}]
+List<String> l = new ArrayList<String>(); // Now the list has been parametrized with a type
+l.add("This is a string");
+Integer i = l.get(0);                     // Compile time error here.
+\end{lstlisting}
+
+Compile time errors are much more desirable then runtime errors because they
+can be caught and fixed at a predictable time, unlike runtime errors which may
+happen at unpredictable times. The code in Listing~\ref{lst:generr} parametrizes
+the \lstinline{List} type with the \lstinline{String} type, and hence the last
+line produces a compile time error as the list's \lstinline{get} method returns
+a \lstinline{String}. 
+
+Parametric polymorphism is an important addition to statically typed programming
+languages. However, Generics in Java and in lots of other programming languages
+have the limitation that types can only be parametrized with other types. 
+This leads to some important limitations.
+
+\Note{Talk about formalization, System F}
+\subsection{Higher Order Polymorphism}
+As mentioned in Section~\ref{sec:generics}, First order parametric polymorphism
+can be very useful in expressing certain concepts succinctly in programming 
+languages. However, there are limitations. This section will attempt to 
+demonstrate one shortfall of first-order polymorphism and then show how the
+problems can be solved with Higher Kinded Polymorphism.
+
+\subsubsection{Functors}
+
+\begin{lstlisting}[caption=Functor as defined in Haskell., language=Haskell, label={lst:haskellFunctor}]
+class Functor f where
+    fmap        :: (a -> b) -> f a -> f b
+\end{lstlisting}
+
+\begin{lstlisting}[caption=An attempt to define Functor in Java, language=Java, label={lst:javaFunctor}]
+interface Functor<A> {
+    Functor<B> map(Function<A, B> f);
+}
+\end{lstlisting}
+The code in Listing~\ref{lst:javaFunctor} has one main issue. The \lstinline{map}
+method defined here may return any type that implements \lstinline{Functor},
+not the necessarily the same class as the one that the method has been called
+from. This means that there is no type-safe way of calling any method on the
+result of calling the \lstinline{map} function.
+
+This problem can be solved with HKTS...
 
 The notion of first-order generics in programming langauges have been formalised
 System F~\cite{higher}. 
