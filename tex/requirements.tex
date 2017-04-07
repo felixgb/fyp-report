@@ -1,0 +1,82 @@
+\chapter{Requirements}\label{sec:reqs}
+The functional requirements of this project specify what this project shall do.
+
+\section{Functional Requirements}\label{sec:functional}
+The functional requirements of this project are laid out in this section.
+Because the entire system is a Haskell program all of these requirements will
+be implemented in Haskell.
+
+\subsection{Parser}\label{sec:parser}
+\Req{A parser for the language specified in~\ref{fig:grammar} shall be created
+using the \texttt{megaparsec}\cite{megaparsec} parser combinator library.}
+{Source code from a file or interactive session.}
+{A data type that represents the abstract syntax of the input provided, or an
+error message pointing to the location of any syntax errors.}
+{An error message with a line and column number and a message.}
+
+\subsection{Simple Type Checker}\label{sec:typecheck}
+\Req{A simple type checker that ensures that simple mistakes are not make,
+e.g.\ using a function type where a numerical type is expected.} {A
+syntactically valid (according to Figure~\ref{fig:grammar}) AST of a program as
+a Haskell data type.} {The same AST of the program that confirms the typing
+rules of the language.} {An error with a message that provides some indication
+of what went wrong.}
+
+\subsection{Ownership Checker}\label{sec:owncheck}
+\Req{An ownership checker ensures there exactly one binding to a resource all
+the time.} {A syntactically valid (according to figure~\ref{fig:grammar}) AST
+of a program as a Haskell data type.} {The same AST of the program that
+confirms the ownership rules of the language.} {An error with a message that
+provides some indication of what went wrong.}
+
+\subsection{Borrow and Lifetime Checker}\label{sec:borrowcheck}
+\Req{A checker that ensures that references that borrow ownership from another
+type last longer than the resource they borrow, and that there are only mutable
+references OR exactly one mutable reference at any one point.} {A syntactically
+valid (according to figure~\ref{fig:grammar}) AST of a program as a Haskell
+data type.} {The same AST of the program that confirms the borrowing rules of
+the language.} {An error with a message that provides some indication of what
+went wrong.}
+
+\subsection{Kind Checker}\label{sec:kindcheck}
+\Req{Ensures that all type constructors using in a program have the correct
+number and kind of arguments.} {A syntactically valid (according to
+figure~\ref{fig:grammar}) AST of a program as a Haskell data type.} {The same
+AST of the program that confirms the kinding rules of the language.} {An error
+with a message that provides some indication of what went wrong.}
+
+\subsection{Evaluator}\label{sec:evaluator}
+\Req{A call-by-value evaluator of the language that will reduce a syntactically
+valid expression.} {A syntactically valid and type-checked AST of a program
+represented as a Haskell data type.} {The final resulting value of evaluating
+the AST.} {A description of any runtime errors that occur within the program.}
+
+\subsection{Interactive Interpreter}\label{sec:interpreter}
+\Req{An interactive interpreter that type checks and then evaluates entered
+expressions.} {Source code as entered by the user.} {The resulting value of
+evaluating the entered expression, some error.} {An parsing, type, or runtime
+error message.}
+
+\subsection{Load a file}\label{sec:load}
+\Req{Provided with a path, the program loads a text file containing source
+code.} {A path provided by the user.} {The source code as a string.} {An error
+reporting a file not found or any other errors.}
+
+\section{Acceptance Criteria and Testing}
+The acceptance criteria of this program correspond to the functional
+requirements in Section~\ref{sec:functional}. The finished project should pass
+the tests laid out in this section.
+
+\subsection{Parsing}
+\Accept{\ref{sec:parser}} {The program should be able to parse valid source
+code and correctly report any errors that are encountered.} {Test numbers}
+
+\subsection{Type checking}
+\Accept{\ref{sec:typecheck},~\ref{sec:owncheck},~\ref{sec:borrowcheck},~\ref{sec:kindcheck}}
+{The type checker should detect any errors in the program.} {Test numbers}
+
+\subsection{Evaluating}
+\Accept{\ref{sec:evaluator},~\ref{sec:interpreter},~\ref{sec:load}} {Source
+code, provided by a file or through the interactive interpreter, should be type
+checked and evaluated.} {Test numbers}
+
