@@ -41,29 +41,62 @@ This leads to some important limitations.
 
 \Note{Talk about formalization, System F}
 \subsection{Higher Order Polymorphism}
-As mentioned in Section~\ref{sec:generics}, First order parametric polymorphism
+As mentioned in Section~\ref{sec:generics}, first order parametric polymorphism
 can be very useful in expressing certain concepts succinctly in programming 
 languages. However, there are limitations. This section will attempt to 
-demonstrate one shortfall of first-order polymorphism and then show how the
-problems can be solved with Higher Kinded Polymorphism.
+demonstrate one shortfall of first order polymorphism and then show how the
+problems can be solved with higher order polymorphism.
 
 \subsubsection{Functors}
 
-\begin{lstlisting}[caption=Functor as defined in Haskell., language=Haskell, label={lst:haskellFunctor}]
-class Functor f where
-    fmap        :: (a -> b) -> f a -> f b
-\end{lstlisting}
+A Functor is important concept in modern programming languages. Concepts like
+lists, \lstinline{Optional}, 
+what is a functor in a programming langauge and why is it useful
 
 \begin{lstlisting}[caption=An attempt to define Functor in Java, language=Java, label={lst:javaFunctor}]
 interface Functor<A> {
     Functor<B> map(Function<A, B> f);
 }
 \end{lstlisting}
+
 The code in Listing~\ref{lst:javaFunctor} has one main issue. The \lstinline{map}
 method defined here may return any type that implements \lstinline{Functor},
 not the necessarily the same class as the one that the method has been called
 from. This means that there is no type-safe way of calling any method on the
 result of calling the \lstinline{map} function.
+
+In order to define a generic Functor interface, a way of referencing the type
+constructor that is being used as a functor is needed. In other worlds, the
+programming language needs type constructors that can be parametrized with
+other type constructors. Generics in Java provide a way of making types like
+\lstinline{Integer}, \lstinline{String}, and even \lstinline{List<Integer>}
+first class, but type constructors like \lstinline{List} must be applied to
+some concrete type before they can be abstracted over.
+
+\begin{lstlisting}[caption=Functor as defined in Haskell., language=Haskell, label={lst:haskellFunctor}]
+class Functor f where
+    fmap        :: (a -> b) -> f a -> f b
+\end{lstlisting}
+
+Listing~\ref{lst:haskellFunctor} shows how Functor can be defined in a Haskell,
+a language that does allow higher order polymorphism. Here, \lstinline{f} is a
+variable that references a type constructor. This class in Haskell specifies
+that anything that instanciates it must provide a single function,
+\lstinline{fmap}.  \lstinline{fmap} takes a function as a parameter that takes
+a value of type, \lstinline{a}, and returns a value of type \lstinline{b}. It
+then takes another argument of type \lstinline{f a}, or a type that the type
+constructor \lstinline{f} has been applied to. For example, it would take a
+value of type \lstinline{Maybe Int}, \lstinline{Maybe} being the type
+constructor \lstinline{f}. It would then return a value of type \lstinline{b},
+wrapped in the same type constructor \lstinline{Maybe}.
+
+The ability to use type constructor as first class in a programming language
+allows programs to be written in a more succinct, patterned, and generic manner.
+Examples like Functor show how a generic interface to work with constructs
+commonly found in software engineering can be achieved with the use of Higher
+Order Polymorphism.
+
+\subsubsection{Kinding}
 
 This problem can be solved with HKTS...
 
