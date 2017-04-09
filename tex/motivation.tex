@@ -1,12 +1,16 @@
-\chapter{Motivation}\label{sec:background}
+\chapter{Motivation}\label{sec:motivation}
+CHAPTER INTRO HERE
 
 \section{Higher Kinded Types}
+This chapter introduces Higher Kinded Types, also known as higher order
+polymorphism, and show what kinds of problems a language that includes these
+features can solve.
 
 \subsection{Parametric Polymorphism}\label{sec:generics}
-First order parametric polymorphism, know as Generics in Java, are types that 
-are parametrized over some other type. They used to write code that can be
-checked for safety at compile time. For example, without generics, a list could
-be used like:
+First order parametric polymorphism, known as Generics in Java, are types that
+are parametrized over some other type. They can be used to write code that can
+be checked for safety at compile time. For example, without generics, a list
+could be used like:
 
 \begin{lstlisting}[caption=Runtime error that could be avoided, language=Java, label={lst:javaerr}]
 List l = new ArrayList();
@@ -28,11 +32,11 @@ Integer i = l.get(0);                     // Compile time error here.
 \end{lstlisting}
 
 Compile time errors are much more desirable then runtime errors because they
-can be caught and fixed at a predictable time, unlike runtime errors which may
-happen at unpredictable times. The code in Listing~\ref{lst:generr} parametrizes
-the \lstinline{List} type with the \lstinline{String} type, and hence the last
-line produces a compile time error as the list's \lstinline{get} method returns
-a \lstinline{String}. 
+can be caught and fixed predictably, unlike runtime errors which may happen at
+unpredictable times. The code in Listing~\ref{lst:generr} parametrizes the
+\lstinline{List} type with the \lstinline{String} type, and hence the last line
+produces a compile time error as the list's \lstinline{get} method returns a
+\lstinline{String}. 
 
 Parametric polymorphism is an important addition to statically typed programming
 languages. However, Generics in Java and in lots of other programming languages
@@ -48,10 +52,20 @@ demonstrate one shortfall of first order polymorphism and then show how the
 problems can be solved with higher order polymorphism.
 
 \subsubsection{Functors}
+A Functor is important concept in modern programming languages. Most languages
+have constructs that can be thought of as Functors, such as lists, optional types,
+trees, and other constructs that can be mapped over. Anything that acts as a
+container for another type and provides a function for mapping a function over
+that contained type is a Functor. They are an important concept because they
+provide a common interface to working with any type that acts as a box for
+another type. This means that programs can be written more generically and is
+more open to changes and modifications.
 
-A Functor is important concept in modern programming languages. Concepts like
-lists, \lstinline{Optional}, 
-what is a functor in a programming langauge and why is it useful
+Some languages seek to reify the general concept of functors so that aspects of a program 
+can be checked for correctness at compile time. However, expressing Functors in
+a generic way requires a more expressive type system, specifically a type system
+that incorporates higher order polymorphism. Here is an example of an attempt
+to define a general Functor interface in Java:
 
 \begin{lstlisting}[caption=An attempt to define Functor in Java, language=Java, label={lst:javaFunctor}]
 interface Functor<A> {
@@ -90,7 +104,7 @@ value of type \lstinline{Maybe Int}, \lstinline{Maybe} being the type
 constructor \lstinline{f}. It would then return a value of type \lstinline{b},
 wrapped in the same type constructor \lstinline{Maybe}.
 
-The ability to use type constructor as first class in a programming language
+The ability to use type constructors as first class in a programming language
 allows programs to be written in a more succinct, patterned, and generic manner.
 Examples like Functor show how a generic interface to work with constructs
 commonly found in software engineering can be achieved with the use of Higher
@@ -98,10 +112,176 @@ Order Polymorphism.
 
 \subsubsection{Kinding}
 
-This problem can be solved with HKTS...
+Higher order polymorphism can be thought of as the polymorphic lambda calculus
+`one level up', and as such the language at the level of types also needs to 
+have a type system in order to prevent wrong expressions from being created.
 
-The notion of first-order generics in programming langauges have been formalised
-System F~\cite{higher}. 
+A system that allows for abstracting over type constructors needs some way
+of enforcing type constructors are not applied to types in a way that does not
+make sense, e.g.\ \lstinline{Integer Integer} does not make sense because the
+integer types does not take any type arguments in order to become a concrete
+type that can be inhabited by values. Alternately just \lstinline{List} cannot
+be instantiated with a value because it need one more type constructor, 
+the type that will be contained within that list.
 
+What is needed is essentially a type system for types. This is the notion of
+the kind of a type. Types can have the kind of $ * $, in which case
+they are concrete and can be inhabited by values, or they can have kind
+$ * \rightarrow * $, or a function from types to other types. Types like
+\lstinline{Integer} or \lstinline{List Integer} have kind $ * $ however
+type constructors like \lstinline{List} have kind 
+$ * \rightarrow * $ because they need to take one more concrete
+types before they can be used as a value. This system of kinding enforces that
+all types are well formed.
 
-\section{Lifetimes}
+\begin{figure}[H]\label{fig:kinds}
+    \centering
+    \begin{tabular}{l c p{3cm} r}
+        $ K $ & $ ::= $ & * &                   Concrete types \\
+      & $ | $ & $ K \rightarrow K $ &           Type functions from types to types \\
+    \end{tabular}
+    \caption{Syntax of types}
+\end{figure}
+
+%%% unfuck this thing
+
+\begin{figure}[h]\label{fig:kindexamples}
+    \centering
+    \begin{tikzpicture}[every node/.style={draw=none}]
+        \node at (0, 0) (k){$ * $};
+        \node at (13, 0) (k2k){$ * \rightarrow * $};
+        \node at (17, 0) (k2k2k){$ * \rightarrow * \rightarrow * $};
+        \node at (24, 0) (kk2k){$ (* \rightarrow *) \rightarrow * $};
+
+        \node[below left=of k] (int) {\texttt{Int}};
+        \node[below right=of int, xshift=-1cm] (listInt) {\texttt{List[Int]}};
+        \node[above right=of listInt, xshift=-2cm] (pairInt) {\texttt{Pair[Int, Int]}};
+
+        \node[below=of int, yshift=-2cm] (val) {\texttt{1}};
+        \node[below right=of val, xshift=-2cm] (listVal) {\texttt{[1, 2, 3]}};
+        \node[above right=of listVal, xshift=-2cm] (pairVal) {\texttt{(1, 2)}};
+
+        \node (proper) [draw, fit= (k) (int) (listInt) (pairInt) (val) (listVal) (pairVal)] {};
+        \node[yshift=3.0ex] at (proper.north) {\textit{Proper}};
+
+        \draw[->] (val) -- (int);
+        \draw[->] (listVal) -- (listInt);
+        \draw[->] (pairVal) -- (pairInt);
+
+        \draw[->] (int) -- (k);
+        \draw[->] (listInt) -- (k);
+        \draw[->] (pairInt) -- (k);
+
+        %%% first order
+        \node[below=of k2k] (list) {\texttt{List}};
+        \node[below=of k2k2k] (pair) {\texttt{Pair}};
+
+        \draw[->] (list) -- (k2k);
+        \draw[->] (pair) -- (k2k2k);
+
+        \node (first) [draw, fit= (k2k) (k2k2k) (list) (pair)] {};
+        \node[yshift=3.0ex] at (first.north) {\textit{First Order}};
+
+        %%% higher order
+        \node[below=of kk2k] (functor) {\texttt{Functor}};
+
+        \draw[->] (functor) -- (kk2k);
+
+        \node (higher) [draw, fit= (functor) (kk2k)] {};
+        \node[yshift=3.0ex] at (higher.north) {\textit{Higher Order}};
+
+        \node[left=of k, xshift=-3cm] (kinds) {\textit{Kind}};
+        \node[left=of int] (type) {\textit{Type}};
+        \node[left=of val] (value) {\textit{Value}};
+    \end{tikzpicture}
+    \caption{Some types and their associated kinds.}
+\end{figure}
+
+\section{Memory management with lifetimes}
+
+\section{Problems with Existing Memory Management Techniques}
+Most programming languages allow for dynamic memory management where the
+program can request portions of memory at run time and free that memory when it
+is no longer required. This operation can be performed manually as in the case
+of languages such as C or automatically in languages with a garbage collector
+such as Java.
+
+\subsection{Manual Memory Management: \texttt{malloc} and \texttt{free}}
+Describe what malloc and free do
+
+\subsubsection{Dangling References}
+Deallocating storage may lead to dangling references, where some reference 
+exists that points to memory that has been deallocated. This is nearly always
+unintentional, however it is an easy for a programmer to make this mistake when
+writing a program. Using the value of deallocated storage can lead to nefarious
+bugs and most languages consider using deallocated storage to
+be undefined behaviour.
+
+\lstinputlisting[
+    caption={A C program that leaves \texttt{p} pointing to deallocated 
+    memory.},
+    label={lst:cdangle}
+]{codeexamples/dangle.c}
+
+In the Rust programming language, references to values must live longer than
+the resource that they refer to~\cite{rust-borrowing}. The same program as the 
+C dangling pointer example (Listing~\ref{lst:cdangle}) written in Rust does not
+compile as it does not meet this restriction.
+
+\lstinputlisting[
+    caption={A Rust program that does not type check.}
+]{codeexamples/dangle.rs}
+
+\subsubsection{Memory Leaks}
+Memory leaks occur when heap storage that is no longer useable is not
+deallocated. This can lead to software allocating more memory for itself and in
+the worst case can lead to a program consuming all available memory.
+
+\lstinputlisting[
+    caption={A C program which leaks memory.}
+]{codeexamples/leak.c}
+
+\subsection{Automatic Memory Management: Garbage Collection}
+Garbage is a term for storage that has been allocated on the stack but is no
+longer reachable by the program, e.g.\ the storage is pointed to by a variable
+that has gone out of scope.  Automatic garbage collection alleviates the
+programmer of explicitly managing memory. However there are several downsides
+to garbage collection. For example, the garbage collector will be invoked to
+collect unusable memory outside of the control of the programmer. When it is
+running it affects the execution of the program for an indeterminate amount
+of time.  This hang is not acceptable in real--time systems.
+
+\section{A Solution in the Type System}
+The Rust programming language achieves memory safety through its ownership
+rules and borrowing system~\cite{rust-borrowing}. The ownership system allows
+Rust to achieve this memory safety by enforcing typing system rules at compile
+time. This means that there is no run time overhead in a Rust program as there
+would otherwise be in a garbage collected language.
+
+\subsection{Ownership, Borrowing, and Lifetimes} \label{sec:regions}
+In Rust, a resource must have one owner, a stack variable. When a variable goes
+out of scope, the resource that it owns is automatically freed. There cannot
+be more than one variable pointing to a given resource at any time. The reason
+for the ``use of a moved value'' error often encountered in code written
+by novice Rust users is because of this rule. This prevents any two parts
+of a Rust program from accessing a section of heap memory at the same time.
+
+Rather than passing ownership of a resource around between functions, Rust
+allows for a reference to be borrowed by another scope temporarily. When
+references go out of scope the resource that they point to (have borrowed) do
+not get automatically freed. This means that after a function with a
+reference passed in as as parameter returns the resource can be used again.
+The scope of borrow must always be shorter than that of the resource which it
+borrows. This concept is formalized in Rust as Lifetimes. The type system will
+enforce that a borrow is not made of a resource that will be freed before the
+borrow ends.
+
+There are two kinds of references: immutable and mutable. There many be many
+immutable borrows of a resource at once or a single mutable borrow. This also
+prevents heap data from being accessed at the same time at different points in
+the program.
+
+This system where resources are freed after the single owner goes out of scope,
+as well as borrows always having shorter lifetimes than original resource
+mean that Rust can enforce the memory safety of programs. These concepts are
+built into the type system.
