@@ -8,9 +8,10 @@ features can solve.
 
 \subsection{Parametric Polymorphism}\label{sec:generics}
 First order parametric polymorphism, known as Generics in Java, are types that
-are parametrized over some other type. They can be used to write code that can
-be checked for safety at compile time. For example, without generics, a list
-could be used like:
+are parametrized over some other type. This kind of polymorphism allows for the
+definition and use of functions that behave uniformly over all types.  They can
+be used to write code that can be checked for safety at compile time. For
+example, without generics, a list could be used like:
 
 \begin{lstlisting}[caption=Runtime error that could be avoided, language=Java, label={lst:javaerr}]
 List l = new ArrayList();
@@ -61,11 +62,11 @@ provide a common interface to working with any type that acts as a box for
 another type. This means that programs can be written more generically and is
 more open to changes and modifications.
 
-Some languages seek to reify the general concept of functors so that aspects of a program 
-can be checked for correctness at compile time. However, expressing Functors in
-a generic way requires a more expressive type system, specifically a type system
-that incorporates higher order polymorphism. Here is an example of an attempt
-to define a general Functor interface in Java:
+Some languages seek to reify the general concept of functors so that aspects of
+a program can be checked for correctness at compile time. However, expressing
+Functors in a generic way requires a more expressive type system, specifically
+a type system that incorporates higher order polymorphism. Here is an example
+of an attempt to define a general Functor interface in Java:
 
 \begin{lstlisting}[caption=An attempt to define Functor in Java, language=Java, label={lst:javaFunctor}]
 interface Functor<A> {
@@ -73,11 +74,11 @@ interface Functor<A> {
 }
 \end{lstlisting}
 
-The code in Listing~\ref{lst:javaFunctor} has one main issue. The \lstinline{map}
-method defined here may return any type that implements \lstinline{Functor},
-not the necessarily the same class as the one that the method has been called
-from. This means that there is no type-safe way of calling any method on the
-result of calling the \lstinline{map} function.
+The code in Listing~\ref{lst:javaFunctor} has one main issue. The
+\lstinline{map} method defined here may return any type that implements
+\lstinline{Functor}, not the necessarily the same class as the one that the
+method has been called from. This means that there is no type-safe way of
+calling any method on the result of calling the \lstinline{map} function.
 
 In order to define a generic Functor interface, a way of referencing the type
 constructor that is being used as a functor is needed. In other worlds, the
@@ -197,8 +198,6 @@ all types are well formed.
     \caption{Some types and their associated kinds.}
 \end{figure}
 
-\section{Memory management with lifetimes}
-
 \section{Problems with Existing Memory Management Techniques}
 Most programming languages allow for dynamic memory management where the
 program can request portions of memory at run time and free that memory when it
@@ -206,10 +205,15 @@ is no longer required. This operation can be performed manually as in the case
 of languages such as C or automatically in languages with a garbage collector
 such as Java.
 
-\subsection{Manual Memory Management: \texttt{malloc} and \texttt{free}}
-Describe what malloc and free do
+\subsection{Manual Memory Management: \lstinline{malloc} and \lstinline{free}}
+Some languages rely on manual instructions inserted by the programmer in order
+to allocate and deallocate regions of memory. Most implementations of the C
+programming language provide a group of library functions for this purpose,
+which include \lstinline{malloc} and \lstinline{free}. As mentioned, these
+constructs are insert manually by the programmer. This can lead to the issues
+described below.
 
-\subsubsection{Dangling References}
+\subsubsection{Dangling References}\label{sec:dangle}
 Deallocating storage may lead to dangling references, where some reference 
 exists that points to memory that has been deallocated. This is nearly always
 unintentional, however it is an easy for a programmer to make this mistake when
@@ -232,8 +236,8 @@ compile as it does not meet this restriction.
     caption={A Rust program that does not type check.}
 ]{codeexamples/dangle.rs}
 
-\subsubsection{Memory Leaks}
-Memory leaks occur when heap storage that is no longer useable is not
+\subsubsection{Memory Leaks}\label{sec:leak}
+Memory leaks occur when heap storage that is no longer usable is not
 deallocated. This can lead to software allocating more memory for itself and in
 the worst case can lead to a program consuming all available memory.
 
@@ -242,14 +246,16 @@ the worst case can lead to a program consuming all available memory.
 ]{codeexamples/leak.c}
 
 \subsection{Automatic Memory Management: Garbage Collection}
-Garbage is a term for storage that has been allocated on the stack but is no
-longer reachable by the program, e.g.\ the storage is pointed to by a variable
-that has gone out of scope.  Automatic garbage collection alleviates the
-programmer of explicitly managing memory. However there are several downsides
-to garbage collection. For example, the garbage collector will be invoked to
-collect unusable memory outside of the control of the programmer. When it is
-running it affects the execution of the program for an indeterminate amount
-of time.  This hang is not acceptable in real--time systems.
+Techniques have been invented in order to mitigate errors related to manual
+memory management. Garbage collection is one such method.  Garbage is a term
+for storage that has been allocated on the stack but is no longer reachable by
+the program, e.g.\ the storage is pointed to by a variable that has gone out of
+scope. Automatic garbage collection alleviates the programmer of explicitly
+managing memory. However there are several downsides to garbage collection. For
+example, the garbage collector will be invoked to collect unusable memory
+outside of the control of the programmer. When it is running it affects the
+execution of the program for an indeterminate amount of time. This hang is not
+acceptable in real--time systems.
 
 \section{A Solution in the Type System}
 The Rust programming language achieves memory safety through its ownership

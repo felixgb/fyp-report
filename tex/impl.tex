@@ -1,1 +1,131 @@
-\chapter{Implementation of \texttt{lambda-calc}}
+\chapter{Implementation}\label{sec:impl}
+The language described in Chapter~\ref{sec:formal} has been implemented as a
+Haskell program. Haskell was a natural choice as it is well suited to building
+type checkers and interpreters. It also has the benefit of having higher kinded
+types built into the language, making it ideal for testing potential features
+of the implemented language.
+
+\section{Parsing}
+A lexer generator Alex~\cite{alex}, and parser generator, Happy~\cite{happy}
+were used in this project. Using these tools in combination made parsing the
+language into the Haskell representation of the abstract syntax simple.
+The grammars provided for the parser generator are a very close approximation
+of Haskell data type. Both Alex and Happy generate Haskell files when run which
+implement the specified grammars.
+
+\section{Terms}
+The Haskell representation of terms of the language are given in Listing~\ref{lst:terms}.
+Type lambdas and Lifetime lambdas can be seen as first class citizens here.
+
+\begin{lstlisting}[caption=Haskell representation of Terms., language=Haskell, label={lst:terms}]
+data Term
+    = Var String
+    | Lit Int
+    | Lam String (Lifetime, Type) Term
+    | App Term Term
+    | TyLam String Kind Term 
+    | TyApp Term Type
+    | LiLam String Term
+    | LiApp Term Term
+    | Lt Lifetime
+    deriving (Eq, Show)
+\end{lstlisting}
+
+\section{Kind Checker}
+The kind checker makes sure that the type expressions in a supplied program are
+well--formed. The Haskell abstract data type that represents kind expression is
+show in Listing~\ref{lst:kinds}.
+
+\begin{lstlisting}[caption=Haskell representation of Kinds., language=Haskell, label={lst:kinds}]
+data Kind
+    = KnStar
+    | KnArr Kind Kind
+    deriving (Eq, Show)
+\end{lstlisting}
+
+\section{Lifetime Checking}
+The syntax of lifetime is show in Listing~\ref{lst:lifetimes}. \Note{explain
+what each of the lifetime consturctors mean}
+
+\begin{lstlisting}[caption=Haskell representation of Lifetimes.., language=Haskell, label={lst:lifetimes}]
+data Lifetime 
+    = LiVar String
+    | LiLit Int
+    | LiStatic
+    | LiDummy
+    deriving (Eq, Show)
+\end{lstlisting}
+
+\lstinline{LiDummy} is used here as a dummy place holder for occurrences of
+lifetime literals during parsing, as lifetimes are associated with the scope of
+terms. An initial walk of the tree replaces dummy values with the
+\lstinline{LiLit} value that represents the depth of the scope that the
+lifetime value is found in.
+
+\subsection{Ordering on Lifetimes}
+should probably write this, Ord instance for lifetimes.
+
+\section{Type Checking}
+Type checking is rather involved in this this language as the type system
+almost contains the lambda calculus itself.
+
+\begin{lstlisting}[caption=Haskell representation of Types., language=Haskell, label={lst:types}]
+data Type
+    = TyVar String
+    | TyInt
+    | TyArr Type Type
+    | Forall String Kind Type
+    | OpLam String Kind Type
+    | OpApp Type Type
+    deriving (Eq, Show)
+\end{lstlisting}
+
+\section{Error Reporting}
+Any part of the program that may result in some kind of error is wrapped in
+a partial application of Haskell's error monad, \lstinline{Except}, to a custom
+error data type:
+
+\begin{lstlisting}[caption=Partially applied error monad and langauge errors., language=Haskell, label={lst:types}]
+type ThrowsError = Except LangErr
+
+data LangErr
+    = ParseError
+    | NoMain
+    | VarNotFound String
+    | WrongKind Kind Kind
+    | NotKnArr Kind
+    | WrongType Type Type
+    | NotTyArr Type
+    | NotForall Type
+    deriving (Eq, Show)
+\end{lstlisting}
+
+This has the advantage of being very composeable, and also of reducing error
+handling boilerplate in the program.
+
+\section{Context Management}
+The lifetime checker, kind checker, and type checker all rely on a variable
+typing context. These contexts are threaded thought the program using Haskell's
+environment monad, also known as the Reader monad. The record type holding these
+contexts is shown in Listing~\ref{lst:contexts}. Contexts are represented as a
+map from variable names are strings to some value, using Haskell's own built
+in strict map data structure.
+
+\begin{lstlisting}[caption=Record data type showing contexts., language=Haskell, label={lst:contexts}]
+type Ctx = Map.Map String
+
+data Env = Env
+    { _typeCtx :: Ctx (Type, Lifetime)
+    , _kindCtx :: Ctx Kind
+    , _ltCtx :: Ctx Lifetime
+    } deriving (Show, Eq)
+\end{lstlisting}
+
+The monad stack where parsing, lifetime checking, kind checking, and type checking
+is therefore:
+
+\begin{lstlisting}[caption=Envirnment and error monad stack., language=Haskell, label={lst:monads}]
+type Typing = ReaderT Env ThrowsError
+\end{lstlisting}
+
+\section{Testing}

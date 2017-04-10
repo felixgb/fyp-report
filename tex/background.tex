@@ -1,5 +1,32 @@
 \chapter{Background}\label{sec:background}
+This chapter introduces some technical terms, technologies, and systems that
+will occur throughout the rest of this report.
 
 \section{Lambda Calculus}\label{sec:lambda-calc}
-\section{System F}\label{sec:system-f}
-\section{First Order Polymorphism}\label{sec:poly}
+The lambda calculus is model of computation where the only behaviour is
+function definition and application. It is commonly used to specify programming
+language features and to formalize their behaviour. Specifically, it is
+commonly used to reason about type systems. The lambda calculus can be viewed
+as a miniature programming language and a system where strict properties can
+be proved.
+
+\begin{figure}[H]\label{fig:lambda-calc}
+    \centering
+    \begin{tabular}{l c p{3cm} r}
+        t & $ ::= $ & $ x $ &                   variables \\
+      & $ | $ & $ \lambda x $ . t &          function abstraction \\
+      & $ | $ & t t &          function application \\
+    \end{tabular}
+    \caption{Grammer of the untyped lambda calculus.}
+\end{figure}
+
+\subsection{Extensions}
+
+The type system introduced in this paper introduces extensions to the simply
+typed lambda calculus. The higher order polymorphic lambda calculus, known as
+System F $\omega$, is included as well as a lifetime--calculus. Both are
+described in Chapter~\ref{sec:formal}
+
+extensions, system F, F omega, lifetimes
+
+\section{Haskell}
