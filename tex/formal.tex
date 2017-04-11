@@ -1,12 +1,55 @@
 \chapter{Formal Definitions}\label{sec:formal}
-An attempt is given in this section to foramallic specify aspects of the langauge
-implemented in this paper.
+This chapter attempts to formalize some of the concepts from Chapter~\ref{sec:motivations}.
+The lambda calculus is introduced as a model of computation and as a system for
+reasoning about features found in programming languages. Types are introduced
+to the lambda calculus as well as other more complex extensions relevant to
+this project. The higher order polymorphic lambda calculus, known as
+System F $\omega$, is included as well as a lifetime--calculus.
+
+\section{Lambda Calculus}\label{sec:lambda-calc}
+The lambda calculus is model of computation where the only behaviour is
+function definition and application. It is commonly used to specify programming
+language features and to formalize their behaviour. Specifically, it is used to
+reason about type systems. The lambda calculus can be viewed as a miniature
+programming language and a system where strict properties can be proved.
+
+\begin{figure}[H]\label{fig:lambda-calc}
+    \centering
+    \begin{tabular}{l c p{3cm} r}
+        t & $ ::= $ & $ x $ &                   variables \\
+      & $ | $ & $ \lambda x $ . t &          function abstraction \\
+      & $ | $ & t t &          function application \\
+    \end{tabular}
+    \caption{Grammer of the untyped lambda calculus.}
+\end{figure}
+
+\subsection{Type in the Lambda Calculus}
+The lambda calculus can be extended with the most simple of typing systems.
+
+\section{System F}
+System F is an extension of the simply typed lambda calculus \cite{tapl} that
+allows for quantification over types as well as terms. In doing this it
+formalizes the notion of polymorphism in programming languages, as described in
+Section~\ref{sec:generics}. It is used to study implementations of polymorphism
+in programming languages.
+
+As the simply typed lambda calculus allows abstraction of terms outside of
+terms through function definitions, System F introduces abstractions at the
+level of types. The system also allows for application of type level
+expressions.
+
+\begin{lstlisting}[mathescape, caption={Polymorphic identity function showing type level abstraction.}, label={lst:systemf}];
+id = $ \lambda X . \lambda x: X . x $
+\end{lstlisting}
+
+The example in Listing~\ref{lst:systemf} shows type level lambdas, where $ X $
+is a type variable that has been abstracted out of the function definition. The
+term level lambda abstracts $ x $ which has the type $ X $. Applying \lstinline{id}
+to a type maybe be written as \lstinline[mathescape]{id [Int]}, which would
+yeild 
 
 \section{System F $\omega$}
-formal definitions of what system F omega is doing, it's like the polymorphic
-calculus one level up
-
-\subsection{System F}
+System F $\omega$ is form
 
 \subsection{Type Operators}
 

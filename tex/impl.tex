@@ -5,6 +5,8 @@ type checkers and interpreters. It also has the benefit of having higher kinded
 types built into the language, making it ideal for testing potential features
 of the implemented language.
 
+\section{The Haskell Language}
+
 \section{Parsing}
 A lexer generator Alex~\cite{alex}, and parser generator, Happy~\cite{happy}
 were used in this project. Using these tools in combination made parsing the
@@ -121,8 +123,8 @@ data Env = Env
     } deriving (Show, Eq)
 \end{lstlisting}
 
-The monad stack where parsing, lifetime checking, kind checking, and type checking
-is therefore:
+The monad stack where parsing, lifetime checking, kind checking, and type checking take
+place is therefore:
 
 \begin{lstlisting}[caption=Envirnment and error monad stack., language=Haskell, label={lst:monads}]
 type Typing = ReaderT Env ThrowsError
