@@ -12,14 +12,71 @@ developed with Higher Kinded Types and a region-based memory management model
 similar to that of the Rust programming language.
 
 The end purpose of this project is to investigate how Higher Kinded Types
-management with the existing type system of the Rust programming language,
-which already has a system of guaranteeing memory safety.
+interact with the existing aspects of the Rust programming language, which already has
+a system of guaranteeing memory safety.
 
-\section{Objective: Combining Type Systems}
-The concepts described in Sections~\ref{sec:hkt} and~\ref{sec:regions} are
-combined in the Lambda Calculus to study how they interact and uncover problems
-that may arise. The syntax of this language is outlined in
-Appendix~\ref{sec:syntax}.
+\section{Types in Programming Languages}
+Type systems are designed to help programmers reason
+about behaviours in the programs that they write. Types restrict the kinds of
+statements that may be expressed, the most obvious reason for doing this is to
+detect certain types of errors before a program is executed. Small, obvious errors, found in expressions
+such as \lstinline{"this sentence" * 69} are easily detected, because
+multiplication makes no sense when applied to a strings of characters and a number.
+However, modern type systems are capable of doing far more. 
+
+As programs become larger and more complex, separating parts of programs that
+do not need any knowledge of each other becomes more important. It is much
+easier to maintain a program composed of separate modules that have no
+knowledge of the inner workings of one another. Modules may interact through
+well defined interfaces to one another and in this way may be swapped out or
+replaced much more easily, as one may re-write code that conforms to an
+existing interface. A type system can be used to define this interface and to
+ensure that new code behaves as expected. Polymorphism, discussed in detail in
+Section~\ref{sec:generics} is one way of allowing more flexibility in these
+interfaces between parts of a program.
+
+more about higher kinded polymorphsim? generic constructs?
+
+Some programming language features may introduce whole new families of errors.
+Allowing a programmer to manually allocate and deallocate space for storing
+objects in memory is known to be a common source of bugs. Languages like C have a
+reputation for being difficult to write bug free programs in because of manual memory
+management. Memory leaks may occur if a programmer requests some storage in
+memory but does not deallocate it. This can lead to programs consuming unreasonably
+large amounts of memory. Referencing some location in memory after it has been
+deallocated (and possibly allocated with some new object) is another common pitfall
+associated with manual memory management. Garbage collection, or the automatic
+allocation and deallocation of objects in heap memory, may alleviate some of these issues.
+However, it can incur a sometimes unacceptable runtime overhead, especially in
+software systems where responsiveness is key.
+
+A solution can be found in the type system. Restricting where a programmer
+can request or reference some location in memory allows a program to be statically
+analysed before it is run, and any errors related to memory usage can be highlighted.
+A type system can form the basis of this restriction, as shown in Section~\ref{sec:regions}
+
+\section{Goals of This Project}
+design a type system for the lambda calculus that includes existing aspects
+from System F omega for the polymorphism bit and design a calculus that can
+reason about first class memory concerns
+
+implement that lanagauge as a haskell program
+
+The main objective of this project is to specify, implement, and investigate a
+language with a novel type system. There are two main aspects to this type
+system:
+\begin{itemize}
+    \item Higher Kinded types, described in Section~\ref{sec:generics}.
+        Formalised in System F $\omega$, they allow for a neat implementation of
+        very generic, high level programming concepts such as Monads and
+        Functors.
+    \item A system restricting the allocation and deallocation of memory,
+        encoded into the type system. This aspect is based on the type system
+        of the Rust programming language, which guarantees memory safety through
+        the mechanisms of lifetime and the borrow checker.
+\end{itemize}
+Higher
+
 
 \subsection{Base Objectives}
 The base objectives for the project are outlined below. These are objectives
@@ -46,7 +103,13 @@ that should be reasonably achievable in the time given.
         typing derivations.
 \end{itemize}
 
-\subsection{Extensions}
+\subsection{Design}
+
+\subsection{Implementation}
+
+\subsection{Tests}
+
+\subsubsection{Extensions}
 Some extensions to the project are outlined below, which should be completed
 depending on time and complexity constraints.
 
@@ -61,6 +124,7 @@ depending on time and complexity constraints.
         into \texttt{rustc}, specifically adding Higher Kinded Types to the
         language.
 \end{itemize}
+
 
 \section{Project Overview}
 The rest of this report is divided in several chapters.

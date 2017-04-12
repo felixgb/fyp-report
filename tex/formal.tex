@@ -138,11 +138,13 @@ id = $ \lambda X . \lambda x: X . x $
 boolId = id [Bool]
 \end{lstlisting}
 
-The example in Listing~\ref{lst:systemf} shows type level lambdas, where $ X $
+The example in Listing~\ref{lst:systemF} shows type level lambdas, where $ X $
 is a type variable that has been abstracted out of the function definition. The
 term level lambda abstracts $ x $ which has the type $ X $. Applying \lstinline{id}
-to a type maybe be written as \lstinline[mathescape]{id [Int]}, which would
-yield 
+to a type maybe be written as \lstinline[mathescape]{id [Bool]}, which 
+yields \lstinline[mathescape]{$ \lambda x: Bool . x $}, or the identify function
+over boolean values. Here $ X $ in the original definition of \lstinline{id} has
+been instantiated with the type of Booleans.
 
 \subsection{System F $\omega$}\label{sec:omega}
 System F $\omega$ is form
