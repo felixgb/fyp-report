@@ -4,7 +4,8 @@ The lambda calculus is introduced as a model of computation and as a system for
 reasoning about features found in programming languages. Types are introduced
 to the lambda calculus as well as other more complex extensions relevant to
 this project. The higher order polymorphic lambda calculus, known as
-System F $\omega$, is included as well as a lifetime--calculus.
+System F $\omega$, is included as well as a lifetime--calculus devised for this
+project.
 
 \section{Lambda Calculus}\label{sec:lambda-calc}
 The lambda calculus is model of computation where the only behaviour is
@@ -13,48 +14,143 @@ language features and to formalize their behaviour. Specifically, it is used to
 reason about type systems. The lambda calculus can be viewed as a miniature
 programming language and a system where strict properties can be proved.
 
-\begin{figure}[H]\label{fig:lambda-calc}
+\begin{figure}[H]\label{fig:lambdaCalc}
     \centering
     \begin{tabular}{l c p{3cm} r}
-        t & $ ::= $ & $ x $ &                   variables \\
-      & $ | $ & $ \lambda x $ . t &          function abstraction \\
-      & $ | $ & t t &          function application \\
+        \texttt{t} & $ ::= $ & $ x $ &                   variables \\
+      & $ | $ & $ \lambda x $ . \texttt{t} &          function abstraction \\
+      & $ | $ & \texttt{t} \texttt{t} &          function application \\
     \end{tabular}
     \caption{Grammer of the untyped lambda calculus.}
 \end{figure}
 
-\subsection{Type in the Lambda Calculus}
+\subsection{Simple Types in the Lambda Calculus}
 The lambda calculus can be extended with the most simple of typing systems.
+In order to demonstrate how the lambda calculus can be used to reason about
+type systems, some additional constructs added. If Boolean literals some other
+concepts are added it becomes more clear how types are useful in programming
+languages.
 
-\section{System F}
+\begin{figure}[H]\label{fig:simpleCalc}
+    \centering
+    \vspace{1cm}
+    \textbf{Terms} \\
+    \begin{tabular}{l c p{3cm} r}
+        \texttt{t} & $ ::= $ & $ x $ &                   variables \\
+      & $ | $ & $ \lambda x : T $ . \texttt{t} &          function abstraction, with type annotations \\
+      & $ | $ & $ true $ &          true literal \\
+      & $ | $ & $ false $ &          false literal \\
+      & $ | $ & if \texttt{t} then \texttt{t} else \texttt{t}  &          if-then-else expression \\
+      & $ | $ & \texttt{t} \texttt{t} &          function application \\
+    \end{tabular}
+
+    \vspace{1cm}
+    \textbf{Values} \\
+    \begin{tabular}{l c p{3cm} r}
+        \texttt{v} & $ ::= $ & $ \lambda x : T . $ \texttt{t} &                   lambda value \\
+      & $ | $ & $ true $ &          true literal value \\
+      & $ | $ & $ false $ &          false literal value \\
+    \end{tabular}
+
+    \vspace{1cm}
+    \textbf{Types} \\
+    \begin{tabular}{l c p{3cm} r}
+        \texttt{T} & $ ::= $ & \texttt{T} $ \rightarrow $ \texttt{T} &      type of functions \\
+      & $ | $ & $ Bool $ &          type of boolean literals \\
+    \end{tabular}
+
+    \caption{Lambda calculus extended with simple types and booleans.}
+\end{figure}
+Programs can be constructed using the language defined in Figure~\ref{fig:simpleCalc}
+that do not make any sense. For example:
+
+\begin{lstlisting}[mathescape, nolol, label={lst:simple}];
+baddef = if $ \lambda x : Bool . x $ then $ false $  else $ true $
+\end{lstlisting}
+
+This program is constructed according to the grammar of terms. However, is not
+well type according to the typing rules in Figure~\ref{fig:simple-type}.
+Specifically, the type of the term found in the guard of the if-expression,
+\lstinline[mathescape]{$ \lambda x : Bool . x $} has type
+\lstinline[mathescape]{$ Bool \rightarrow Bool $} but has to be
+\lstinline[mathescape]{$ Bool $} for the term to be considered well typed.
+It makes sense to restrict the kinds of values found in the guard of an if-then-else
+expression. Anything other than a boolean value in that place may indicate
+programmer error, which could be as simple as a typing mistake or a fundamental
+misunderstanding of what they are trying to express. Type systems help catch
+these kind of mistakes before program execution. Specifying these rules on top
+of the lambda calculus can be a very informative way of looking at programming
+language features. The rest of this chapter describes other extensions to the
+lambda calculus that model some of the programming concepts investigated in
+this report.
+
+\subsection{System F}
 System F is an extension of the simply typed lambda calculus \cite{tapl} that
 allows for quantification over types as well as terms. In doing this it
 formalizes the notion of polymorphism in programming languages, as described in
 Section~\ref{sec:generics}. It is used to study implementations of polymorphism
 in programming languages.
 
-As the simply typed lambda calculus allows abstraction of terms outside of
+As the simply typed lambda calculus allows for abstraction of terms outside of
 terms through function definitions, System F introduces abstractions at the
 level of types. The system also allows for application of type level
-expressions.
+expressions. This system can be used to reason about first order polymorphism,
+however more extensions to talk about higher order polymorphism. These extensions
+are introduced in Section~\ref{sec:omega}.
 
-\begin{lstlisting}[mathescape, caption={Polymorphic identity function showing type level abstraction.}, label={lst:systemf}];
+\begin{figure}[H]\label{fig:systemF}
+    \centering
+    \vspace{1cm}
+    \textbf{Terms} \\
+    \begin{tabular}{l c p{3cm} r}
+        \texttt{t} & $ ::= $ & $ x $ &                   variables \\
+      & $ | $ & $ \lambda x : T $ . \texttt{t} &          function abstraction, with type annotations \\
+      & $ | $ & \texttt{t} \texttt{t} &          function application \\
+      & $ | $ & $ \lambda X $ . \texttt{t} &          type abstraction \\
+      & $ | $ & $ \texttt{t} [\texttt{T}] $ &          type application \\
+    \end{tabular}
+
+    \vspace{1cm}
+    \textbf{Values} \\
+    \begin{tabular}{l c p{3cm} r}
+        \texttt{v} & $ ::= $ & $ \lambda x : T . $ \texttt{t} &                   lambda value \\
+      & $ | $ & $ \lambda X . $ \texttt{t} &   type abstraction value \\
+    \end{tabular}
+
+    \vspace{1cm}
+    \textbf{Types} \\
+    \begin{tabular}{l c p{3cm} r}
+        \texttt{T} & $ ::= $ & \texttt{T} $ \rightarrow $ \texttt{T} &      type of functions \\
+        & $ | $ & $ X $ &       type variables \\
+        & $ | $ & $ \forall X . $ \texttt{T} &       universal type \\
+    \end{tabular}
+
+    \caption{System F}
+\end{figure}
+
+\subsubsection{Examples}
+System F models first order polymorphism in programming languages, such as aspect of
+the generics found in Java. Some examples of how System F can be used are given
+below:
+
+\begin{lstlisting}[mathescape, nolol, label={lst:systemf}];
 id = $ \lambda X . \lambda x: X . x $
+boolId = id [Bool]
 \end{lstlisting}
 
 The example in Listing~\ref{lst:systemf} shows type level lambdas, where $ X $
 is a type variable that has been abstracted out of the function definition. The
 term level lambda abstracts $ x $ which has the type $ X $. Applying \lstinline{id}
 to a type maybe be written as \lstinline[mathescape]{id [Int]}, which would
-yeild 
+yield 
 
-\section{System F $\omega$}
+\subsection{System F $\omega$}\label{sec:omega}
 System F $\omega$ is form
 
-\subsection{Type Operators}
+\subsubsection{Type Operators}
 
 \section{Adding Lifetimes}
 showing how lifetimes are represented in this lanaguage
 
-\section{Typing Rules}
+\section{Final Typing Rules}
 

@@ -1,23 +1,50 @@
 \chapter{Implementation}\label{sec:impl}
-The language described in Chapter~\ref{sec:formal} has been implemented as a
-Haskell program. Haskell was a natural choice as it is well suited to building
-type checkers and interpreters. It also has the benefit of having higher kinded
-types built into the language, making it ideal for testing potential features
-of the implemented language.
+This chapter describes how the ideas and type system described in
+Chapter~\ref{sec:formal} will be implemented. As stated in
+Chapter~\ref{sec:requirements}, one of the goals for this project is to build a
+program that will be able to parse, type check, and evaluate a language based
+on the lambda calculus. The most involved phase of implementation and the focus
+of this project involves the type checking phase, which includes lifetime
+checking of pointers and references, polymorphic type checking, and checking
+that the language of types themselves is well formed, or kind checking.
+
+The requirements of this project influence the choice of the language of
+implementation. Haskell was chosen as it is well suited to the tasks of
+parsing, abstract syntax tree declaration, and is in general a practical
+language to work with.
 
 \section{The Haskell Language}
+Haskell is a general purpose, statically typed, functional
+language~\cite{haskell}. It has several desirable features for a language
+implementation language. These include:
+
+\begin{itemize}
+\item Algebraic data types, which are very good at representing abstract syntax
+trees, used to describe programming languages.
+\item Pattern matching, which is useful for deconstruct abstract syntax trees.
+\item A wealth of effective parsing libraries, over several paradigms.
+\item Idiomatic monadic programming, which can be used to reduce error handling
+and state threading boilerplate out of the logic of the program.
+\end{itemize}
+
+It also has the benefit of having higher kinded types built into the language,
+making it ideal for testing potential features of the implemented language.
+The language described in Chapter~\ref{sec:formal} has been implemented as a
+Haskell program. The rest of this chapter describes how this was accomplished
+in more specific detail.
 
 \section{Parsing}
 A lexer generator Alex~\cite{alex}, and parser generator, Happy~\cite{happy}
 were used in this project. Using these tools in combination made parsing the
-language into the Haskell representation of the abstract syntax simple.
-The grammars provided for the parser generator are a very close approximation
-of Haskell data type. Both Alex and Happy generate Haskell files when run which
+language into the Haskell representation of the abstract syntax simple.  The
+grammars provided for the parser generator are a very close approximation of
+Haskell data type. Both Alex and Happy generate Haskell files when run which
 implement the specified grammars.
 
 \section{Terms}
-The Haskell representation of terms of the language are given in Listing~\ref{lst:terms}.
-Type lambdas and Lifetime lambdas can be seen as first class citizens here.
+The Haskell representation of terms of the language are given in
+Listing~\ref{lst:terms}.  Type lambdas and Lifetime lambdas can be seen as
+first class citizens here.
 
 \begin{lstlisting}[caption=Haskell representation of Terms., language=Haskell, label={lst:terms}]
 data Term
@@ -83,8 +110,8 @@ data Type
 \end{lstlisting}
 
 \section{Error Reporting}
-Any part of the program that may result in some kind of error is wrapped in
-a partial application of Haskell's error monad, \lstinline{Except}, to a custom
+Any part of the program that may result in some kind of error is wrapped in a
+partial application of Haskell's error monad, \lstinline{Except}, to a custom
 error data type:
 
 \begin{lstlisting}[caption=Partially applied error monad and langauge errors., language=Haskell, label={lst:types}]
@@ -102,16 +129,16 @@ data LangErr
     deriving (Eq, Show)
 \end{lstlisting}
 
-This has the advantage of being very composeable, and also of reducing error
+This has the advantage of being very compose able, and also of reducing error
 handling boilerplate in the program.
 
 \section{Context Management}
 The lifetime checker, kind checker, and type checker all rely on a variable
 typing context. These contexts are threaded thought the program using Haskell's
-environment monad, also known as the Reader monad. The record type holding these
-contexts is shown in Listing~\ref{lst:contexts}. Contexts are represented as a
-map from variable names are strings to some value, using Haskell's own built
-in strict map data structure.
+environment monad, also known as the Reader monad. The record type holding
+these contexts is shown in Listing~\ref{lst:contexts}. Contexts are represented
+as a map from variable names are strings to some value, using Haskell's own
+built in strict map data structure.
 
 \begin{lstlisting}[caption=Record data type showing contexts., language=Haskell, label={lst:contexts}]
 type Ctx = Map.Map String
@@ -123,8 +150,8 @@ data Env = Env
     } deriving (Show, Eq)
 \end{lstlisting}
 
-The monad stack where parsing, lifetime checking, kind checking, and type checking take
-place is therefore:
+The monad stack where parsing, lifetime checking, kind checking, and type
+checking take place is therefore:
 
 \begin{lstlisting}[caption=Envirnment and error monad stack., language=Haskell, label={lst:monads}]
 type Typing = ReaderT Env ThrowsError
