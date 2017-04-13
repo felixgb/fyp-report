@@ -1,5 +1,52 @@
-\chapter{Requirements}\label{sec:reqs}
+\chapter{Requirements}\label{sec:requirements}
+\Note{This section is *very* work in progress.}
+
+\section{Base Objectives}
+The base objectives for the project are outlined below. 
+
+\begin{itemize}
+    \item
+        Design a language which incorporates region based memory management
+        techniques and Higher Kinded Types into the type system. Describe the 
+        language using a formal grammar.
+    \item
+        Implement the Lambda Calculus extended with references as a Haskell
+        program, modelling dynamic memory allocation inside the interpreter for
+        the language.
+    \item
+        Implement a system for ensuring all resources in the language have
+        exactly one owner (are assigned to one variable), based on the model in
+        Rust.
+    \item
+        Implement a type system that incorporates higher order polymorphism
+        into the language (higher kinded types).
+    \item
+        Formalize the rules of the type checker and construct the appropriate
+        typing derivations.
+\end{itemize}
+
+\subsection{Design}
+
+\subsection{Implementation}
+
+\subsection{Tests}
 The functional requirements of this project specify what this project shall do.
+
+\section{Extensions}
+Some extensions to the project are outlined below, which should be completed
+depending on time and complexity constraints.
+
+\begin{itemize}
+    \item
+        Extend the base lambda calculus with constructs that more closely model
+        the Rust programming language, including traits (or in the case of the
+        language outlined in the project, type constructor classes), enums 
+        (discriminated union types), and local type inference.
+    \item
+        Investigate how concepts learned in this project can be incorporated
+        into \texttt{rustc}, specifically adding Higher Kinded Types to the
+        language.
+\end{itemize}
 
 \section{Functional Requirements}\label{sec:functional}
 The functional requirements of this project are laid out in this section.

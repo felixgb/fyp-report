@@ -1,11 +1,14 @@
-\chapter{Motivation}\label{sec:motivation}
+\chapter{Background and Motivation}\label{sec:motivation} 
 This chapter attempts to give some background for the topics covered in this
 project. Aspects from existing type systems are introduced and explained.
+Later an introduction to how programming lanagauges are represented as trees is
+given, as well as a how these trees can be traversed in order to build a type 
+checker. \Note{fix this sentence}
 
 \section{Higher Kinded Types}
-This chapter introduces Higher Kinded Types, also known as higher order
-polymorphism, and show what kinds of problems a language that includes these
-features can solve.
+This section introduces Higher Kinded Types, also known as higher order
+polymorphism, and demonstrates the expressive power of this concept though
+examples.
 
 \subsection{Parametric Polymorphism}\label{sec:generics}
 First order parametric polymorphism, known as Generics in Java, are types that
@@ -21,7 +24,7 @@ Integer i = (Integer) l.get(0); // Run time error here
 \end{lstlisting}
 
 This is problematic because a list in Java can contain any type of object, but
-methods that the \lstinline{List} object provide must know about the type of
+methods that the \lstinline{List} object provides must know about the type of
 object that the list contains. If those methods do not have a way of knowing
 what kind of object a list contains then calling the methods will not be type
 safe, as demonstrated in Listing~\ref{lst:javaerr}. The same code written with
@@ -40,9 +43,21 @@ unpredictable times. The code in Listing~\ref{lst:generr} parametrizes the
 produces a compile time error as the list's \lstinline{get} method returns a
 \lstinline{String}. 
 
+\subsubsection{Type Constructors}
+A type constructor is a feature of programming languages that builds new types
+from old ones. In Java, an example would be the \lstinline{List} type. The
+\lstinline{List} type cannot be used to describe some value in Java; all values
+must be a \lstinline{List} \textit{of} something, for example a
+\lstinline{List<String>}.  In other words, \lstinline{List} is a type
+constructor that must be parametrized with some base type like
+\lstinline{Integer}, \lstinline{String}, or even \lstinline{List<String>}. Once
+it has been applied to some base type, it becomes a new type;
+\lstinline{List<Integer>}, \lstinline{List<String>}, and
+\lstinline{List<List<String>>} are all separate types.
+
 Parametric polymorphism is an important addition to statically typed
 programming languages. First order polymorphism is modelled by a typed lambda
-calculus called System F, which is introduced in Chapter~\ref{sec:systemF}.
+calculus called System F, which is introduced in Section~\ref{sec:systemF}.
 However, Generics in Java and in lots of other programming languages leave
 something to be desired.  There are higher level, general, generic programming
 concepts that cannot be expressed with first order polymorphism. Generally,
@@ -52,12 +67,11 @@ polymorphism is needed in order to neatly express some programming concepts.
 
 \subsection{Higher Order Polymorphism}
 As mentioned in Section~\ref{sec:generics}, first order parametric polymorphism
-can be very useful in expressing certain concepts succinctly in programming 
-languages. However, there are limitations. This section will attempt to 
-demonstrate one shortfall of first order polymorphism and then show how the
-problems can be solved with higher order polymorphism. Functors are introduced
-as one of the concepts that cannot be expressed neatly with first order polymorphism,
-but this is just one example.
+can be very useful to programmers.  However, there are limitations. This
+section will attempt to demonstrate one shortfall of first order polymorphism
+and then show how the problems can be solved with higher order polymorphism.
+Functors are introduced as an example of one of the concepts that cannot be
+expressed neatly with first order polymorphism.
 
 \subsubsection{Functors}
 A Functor is important concept in modern programming languages. Most languages
@@ -115,14 +129,14 @@ wrapped in the same type constructor \lstinline{Maybe}.
 The ability to use type constructors as first class in a programming language
 allows programs to be written in a more succinct, patterned, and generic manner.
 Examples like Functor show how a generic interface to work with constructs
-commonly found in software engineering can be achieved with the use of Higher
-Order Polymorphism. 
+commonly found in software engineering can be achieved with the use of higher
+order polymorphism. 
 
 \subsubsection{Kinding}
 
 Higher order polymorphism can be thought of as the polymorphic lambda calculus
 `one level up', and as such the language at the level of types also needs to 
-have a type system in order to prevent wrong expressions from being created.
+have a system in place in order to prevent wrong expressions from being created.
 
 A system that allows for abstracting over type constructors needs some way
 of enforcing type constructors are not applied to types in a way that does not
@@ -265,6 +279,12 @@ execution of the program for an indeterminate amount of time. This hang is not
 acceptable in real--time systems.
 
 \section{A Solution in the Type System}
+Memory safety can still be achieved without the use of a garbage collectors.
+Program structure may be analysed during semantic checking and areas likely to
+cause issue can be identified. Here Rust's way of performing these checks is
+examined.
+
+\subsection{An Introduction to Rust's model of Memory Management}
 Rust, a systems programming language~\cite{rust} is designed to provide memory
 safety with no runtime overhead. Rather than relying on a garbage collector to
 provide run-time memory safety, Rust relies on strong compile time checks.
@@ -272,7 +292,7 @@ This system of compile time checks is referred to as \textit{ownership}, and is
 derived from affine type systems and unique pointers to memory
 locations\cite{rust-borrowing} \cite{levy2015ownership}.
 
-\subsection{Affine types}
+\subsubsection{Affine types}
 Affine types are a development of Linear type systems. Linear type systems
 ensure that every variable is used exactly once. In an affine type system, a
 variable may be used at most once, i.e.\ zero or one times. This has applications
@@ -280,7 +300,7 @@ for managing resources in a program that do not persist the whole time that the
 program is running, e.g.\ file handles or heap allocated memory \cite{attapl}
 \cite{tovAffine}.
 
-\subsection{Ownership}\label{sec:regions}
+\subsubsection{Ownership}\label{sec:regions}
 Values in Rust are bound to a single \textit{owner}, which is the variable to
 which it is bound. When the owning variable goes out of scope, the value is
 freed. For example:
@@ -336,3 +356,7 @@ This system where resources are freed after the single owner goes out of scope,
 as well as borrows always having shorter lifetimes than original resource
 mean that Rust can enforce the memory safety of programs. These concepts are
 built into the type system.
+
+\section{Representing Programs as Data Structures}
+
+\section{Type checking}

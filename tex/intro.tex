@@ -1,144 +1,111 @@
 \chapter{Introduction}\label{sec:intro}
 
 \section{Project Aims}
-This project aims to design and implement a language with a novel type system,
-with two main aspects. The first is the ability to abstract over type
-constructors as well as types, in effect allowing for a language at the level
-of types as well as expressions. The second is a memory management technique
-that guarantees memory safety at compile time. This technique is incorporated
-into the language as part of the type system.  These two concepts will be
-implemented in the Lambda Calculus. A type checker and interpreter will be
-developed with Higher Kinded Types and a region-based memory management model
-similar to that of the Rust programming language.
+%This project aims to design and implement a language with a novel type system,
+%with two main aspects. The first is the ability} to abstract over type
+%constructors as well as types, in effect allowing for a language at the level
+%of types as well as expressions. The second is a memory management technique
+%that guarantees memory safety at compile time. This technique is incorporated
+%into the language as part of the type system.  These two concepts will be
+%implemented in the Lambda Calculus. A type checker and interpreter will be
+%developed with Higher Kinded Types and a region-based memory management model
+%similar to that of the Rust programming language.
 
-The end purpose of this project is to investigate how Higher Kinded Types
-interact with the existing aspects of the Rust programming language, which already has
-a system of guaranteeing memory safety.
+The purpose of this project is to design a type system for a programming
+language that incorporates Higher Kinded Types with a system that guarantees
+memory safety at compile time. Higher Kinded types are necessary to neatly
+express certain desirable programming features. Rust is a programming language
+that provides memory safety through compile-time checks. This aspect of Rust is
+known as the \textit{ownership} model, of which \textit{lifetimes} and
+\textit{borrowing} are key concepts \cite{rust}. This project attempts to
+implement a type checker for this language as a Haskell program, and
+investigate how higher kinded types and the Rust ownership model interact.
 
 \section{Types in Programming Languages}
-Type systems are designed to help programmers reason
-about behaviours in the programs that they write. Types restrict the kinds of
-statements that may be expressed, the most obvious reason for doing this is to
-detect certain types of errors before a program is executed. Small, obvious errors, found in expressions
-such as \lstinline{"this sentence" * 69} are easily detected, because
-multiplication makes no sense when applied to a strings of characters and a number.
-However, modern type systems are capable of doing far more. 
+Type systems are designed to help programmers reason about behaviours in the
+programs that they write. Types restrict the kinds of statements that may be
+expressed, the most obvious reason for doing this is to detect certain types of
+errors before a program is executed. Small, obvious errors, found in
+expressions such as \lstinline{"this sentence" * 69} are easily detected,
+because multiplication makes no sense when applied to a strings of characters
+and a number.  However, modern type systems are capable of doing far more. 
 
 As programs become larger and more complex, separating parts of programs that
 do not need any knowledge of each other becomes more important. It is much
 easier to maintain a program composed of separate modules that have no
 knowledge of the inner workings of one another. Modules may interact through
-well defined interfaces to one another and in this way may be swapped out or
-replaced much more easily, as one may re-write code that conforms to an
-existing interface. A type system can be used to define this interface and to
-ensure that new code behaves as expected. Polymorphism, discussed in detail in
-Section~\ref{sec:generics} is one way of allowing more flexibility in these
-interfaces between parts of a program.
-
-more about higher kinded polymorphsim? generic constructs?
+well defined interfaces and in this way may be swapped out or replaced much
+more easily. One may re-write code that conforms to an existing interface
+without knowing about another module's implementation details. A type system can
+be used to define this interface and to ensure that new code behaves as
+expected. Polymorphism, discussed in detail in Section~\ref{sec:generics}, is
+one way of allowing more flexibility in these interfaces between parts of a
+program while retaining correctness.
 
 Some programming language features may introduce whole new families of errors.
 Allowing a programmer to manually allocate and deallocate space for storing
-objects in memory is known to be a common source of bugs. Languages like C have a
-reputation for being difficult to write bug free programs in because of manual memory
-management. Memory leaks may occur if a programmer requests some storage in
-memory but does not deallocate it. This can lead to programs consuming unreasonably
-large amounts of memory. Referencing some location in memory after it has been
-deallocated (and possibly allocated with some new object) is another common pitfall
-associated with manual memory management. Garbage collection, or the automatic
-allocation and deallocation of objects in heap memory, may alleviate some of these issues.
-However, it can incur a sometimes unacceptable runtime overhead, especially in
-software systems where responsiveness is key.
+objects in memory is known to be a common source of bugs. Languages like C have
+a reputation for being difficult to write bug free programs in because of
+manual memory management. Memory leaks may occur if a programmer requests some
+storage in memory but does not deallocate it. This can lead to programs
+consuming unreasonably large amounts of memory. Referencing some location in
+memory after it has been deallocated (and possibly allocated with some new
+object) is another common pitfall associated with manual memory management.
+Garbage collection, or the automatic allocation and deallocation of objects in
+heap memory, may alleviate some of these issues.  However, it can incur a
+sometimes unacceptable runtime overhead especially in software systems where
+responsiveness is key.
 
-A solution can be found in the type system. Restricting where a programmer
-can request or reference some location in memory allows a program to be statically
-analysed before it is run, and any errors related to memory usage can be highlighted.
-A type system can form the basis of this restriction, as shown in Section~\ref{sec:regions}
+A solution can be found in the type system. Restricting where a programmer can
+request or reference some location in memory allows a program to be statically
+analysed before it is run, and any sections of code that could cause memory
+related issues are shown as compile time errors.  A type system can form the
+basis of this restriction, as shown in Section~\ref{sec:regions}
+
+In studying these type systems it is often useful formalize them in a system
+with well known and well understood behaviour. In this case the system is the
+lambda calculus, which functions as a miniature programming language and as a
+formal model for understanding the behaviour of types. The lambda calculus and
+how it pertains to this project is described in Section~\ref{sec:lambdacalc}.
+Higher Kinded Types, or higher order polymorphism, have been well described in
+System F $\omega$, itself a typed lambda calculus~\cite{tapl}.
 
 \section{Goals of This Project}
-design a type system for the lambda calculus that includes existing aspects
-from System F omega for the polymorphism bit and design a calculus that can
-reason about first class memory concerns
-
-implement that lanagauge as a haskell program
-
-The main objective of this project is to specify, implement, and investigate a
-language with a novel type system. There are two main aspects to this type
-system:
+A type checker for a language based upon the lambda calculus will be developed
+as a Haskell program. Haskell is described in Section~\ref{sec:haskell} along
+with the reasons for choosing it. A parser, type checker, and simple
+interpreter will all be implemented along with a test programs demonstrating
+some intended behaviours. The design of the language is described in
+Section~\ref{sec:formal}.  The type-checker aspect of the program is concerned
+with:
 \begin{itemize}
     \item Higher Kinded types, described in Section~\ref{sec:generics}.
         Formalised in System F $\omega$, they allow for a neat implementation of
         very generic, high level programming concepts such as Monads and
         Functors.
-    \item A system restricting the allocation and deallocation of memory,
+    \item A system restricting the allocation, use, and deallocation of memory,
         encoded into the type system. This aspect is based on the type system
         of the Rust programming language, which guarantees memory safety through
-        the mechanisms of lifetime and the borrow checker.
+        its lifetime and borrow checker.
 \end{itemize}
-Higher
-
-
-\subsection{Base Objectives}
-The base objectives for the project are outlined below. These are objectives
-that should be reasonably achievable in the time given.
-
-\begin{itemize}
-    \item
-        Design a language which incorporates region based memory management
-        techniques and Higher Kinded Types into the type system. Describe the 
-        language using a formal grammar.
-    \item
-        Implement the Lambda Calculus extended with references as a Haskell
-        program, modelling dynamic memory allocation inside the interpreter for
-        the language.
-    \item
-        Implement a system for ensuring all resources in the language have
-        exactly one owner (are assigned to one variable), based on the model in
-        Rust.
-    \item
-        Implement a type system that incorporates higher order polymorphism
-        into the language (higher kinded types).
-    \item
-        Formalize the rules of the type checker and construct the appropriate
-        typing derivations.
-\end{itemize}
-
-\subsection{Design}
-
-\subsection{Implementation}
-
-\subsection{Tests}
-
-\subsubsection{Extensions}
-Some extensions to the project are outlined below, which should be completed
-depending on time and complexity constraints.
-
-\begin{itemize}
-    \item
-        Extend the base lambda calculus with constructs that more closely model
-        the Rust programming language, including traits (or in the case of the
-        langauge outlined in the project, type constructor classes), enums 
-        (discriminated union types), and local type inference.
-    \item
-        Investigate how concepts learned in this project can be incorporated
-        into \texttt{rustc}, specifically adding Higher Kinded Types to the
-        language.
-\end{itemize}
+The notion of an addressable area of memory, as well as mechanisms for
+allocating and deallocating areas of that memory, will be added to the base
+lambda calculus.  The implementation of the type system, as well as the parser,
+build system, test framework, and interpreter are described in
+Chapter~\ref{sec:impl}. A formal description of the language can be found in
+Chapter~\ref{sec:formal}.
 
 
 \section{Project Overview}
-The rest of this report is divided in several chapters.
-Chapter~\ref{sec:background} describes concepts neccessary in order to
-understand the rest of the report.  Chapter~\ref{sec:professional} gives an
-analysis of the ethical considerations of this project. Chapter~\ref{sec:reqs}
-list the requirements of this project.  This chapter is divided into the
-functional requirements, or what the project will do, and non-functional
-requirements which list how the project will be carried out. Finally the
-acceptance criteria are listed, which the final tests of the project will be
-based on. Chapter~\ref{sec:plan} breaks down the main phases of work to be
-completed in this project and gives an estimated time for each phase. Work done
-so far is also listed. Chapter~\ref{sec:log} details what is discussed during
-meetings. Both meetings which have already happened and meetings which have yet
-to happen are listed. Appendix~\ref{sec:proposal} gives the original project
-proposal which was already submitted. Appendix~\ref{sec:grammar} describes the
-grammar of the extended Lambda Calculus that this project is based on.
+The rest of this report is divided in several chapters. Chapter~\ref{sec:ethics}
+lists the ethical considerations of this project. Chapter~\ref{sec:motivation}
+describes important concepts in more detail as well as describing how common tasks
+related to type checking are accomplished. Chapter~\ref{sec:formal} then introduces the
+lambda calculus as way of reasoning about type systems. The design of the language
+is shown including the grammar. Chapter~\ref{sec:requirements} formalizes what
+should be accomplished by the type checker to be implemented. Software engineering
+issues are tackled in Chapter~\ref{sec:impl}, including the test framework and
+build system used. Key tests demonstrating desired behaviour are given in
+Chapter~\ref{sec:testing}. Issues about the effectiveness of this type system
+are described in Chapter~\ref{sec:evaluation}. Finally, unmet requirements and
+further work to be done is covered in Chapter~\ref{sec:conclusion}.
