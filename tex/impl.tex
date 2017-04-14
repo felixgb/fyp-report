@@ -19,12 +19,12 @@ language~\cite{haskell}. It has several desirable features for a language
 implementation language. These include:
 
 \begin{itemize}
-\item Algebraic data types, which are very good at representing abstract syntax
-trees, used to describe programming languages.
-\item Pattern matching, which is useful for deconstruct abstract syntax trees.
-\item A wealth of effective parsing libraries, over several paradigms.
-\item Idiomatic monadic programming, which can be used to reduce error handling
-and state threading boilerplate out of the logic of the program.
+    \item Algebraic data types, which are very good at representing abstract syntax
+    trees, used to describe programming languages.
+    \item Pattern matching, which is useful for deconstruct abstract syntax trees.
+    \item A wealth of effective parsing libraries, over several paradigms.
+    \item Idiomatic monadic programming, which can be used to reduce error handling
+    and state threading boilerplate out of the logic of the program.
 \end{itemize}
 
 It also has the benefit of having higher kinded types built into the language,
@@ -32,6 +32,19 @@ making it ideal for testing potential features of the implemented language.
 The language described in Chapter~\ref{sec:formal} has been implemented as a
 Haskell program. The rest of this chapter describes how this was accomplished
 in more specific detail.
+
+\section{Stack, Haskell's Build System}
+Stack was used as the build tool for this project~\cite{stack}. This made it
+easy to compile and test the project as well as managing libraries. Several
+commands were very useful in managing the project, including \lstinline{stack build}
+to compile all changes to the project and \lstinline{stack test} which
+ran all of the tests for the project. The lexer and parser generator source
+files were not Haskell source files but files that specify how Haskell source
+files should be built. These tools are described in detail in later sections
+but Stack was used to automate the building of these tools as well. Finally,
+stack provides an interface to an interactive interpreter for Haskell, GHCI.
+This tool was used extensively to test parts of the project as they were being
+developed.
 
 \section{Parsing}
 A lexer generator Alex~\cite{alex}, and parser generator, Happy~\cite{happy}
@@ -41,7 +54,9 @@ grammars provided for the parser generator are a very close approximation of
 Haskell data type. Both Alex and Happy generate Haskell files when run which
 implement the specified grammars.
 
-\section{Terms}
+
+\section{Componests of the Type Checker}
+\subsection{Terms}
 The Haskell representation of terms of the language are given in
 Listing~\ref{lst:terms}.  Type lambdas and Lifetime lambdas can be seen as
 first class citizens here.
@@ -60,7 +75,7 @@ data Term
     deriving (Eq, Show)
 \end{lstlisting}
 
-\section{Kind Checker}
+\subsection{Kind Checker}
 The kind checker makes sure that the type expressions in a supplied program are
 well--formed. The Haskell abstract data type that represents kind expression is
 show in Listing~\ref{lst:kinds}.
@@ -72,7 +87,7 @@ data Kind
     deriving (Eq, Show)
 \end{lstlisting}
 
-\section{Lifetime Checking}
+\subsection{Lifetime Checking}
 The syntax of lifetime is show in Listing~\ref{lst:lifetimes}. \Note{explain
 what each of the lifetime consturctors mean}
 
@@ -91,10 +106,10 @@ terms. An initial walk of the tree replaces dummy values with the
 \lstinline{LiLit} value that represents the depth of the scope that the
 lifetime value is found in.
 
-\subsection{Ordering on Lifetimes}
+\subsubsection{Ordering on Lifetimes}
 should probably write this, Ord instance for lifetimes.
 
-\section{Type Checking}
+\subsection{Type Checking}
 Type checking is rather involved in this this language as the type system
 almost contains the lambda calculus itself.
 
@@ -109,12 +124,12 @@ data Type
     deriving (Eq, Show)
 \end{lstlisting}
 
-\section{Error Reporting}
+\subsection{Error Reporting}
 Any part of the program that may result in some kind of error is wrapped in a
 partial application of Haskell's error monad, \lstinline{Except}, to a custom
 error data type:
 
-\begin{lstlisting}[caption=Partially applied error monad and langauge errors., language=Haskell, label={lst:types}]
+\begin{lstlisting}[caption=Partially applied error monad and language errors., language=Haskell, label={lst:types}]
 type ThrowsError = Except LangErr
 
 data LangErr
@@ -132,7 +147,7 @@ data LangErr
 This has the advantage of being very compose able, and also of reducing error
 handling boilerplate in the program.
 
-\section{Context Management}
+\subsection{Context Management}\label{sec:ctx}
 The lifetime checker, kind checker, and type checker all rely on a variable
 typing context. These contexts are threaded thought the program using Haskell's
 environment monad, also known as the Reader monad. The record type holding
@@ -158,3 +173,24 @@ type Typing = ReaderT Env ThrowsError
 \end{lstlisting}
 
 \section{Testing}
+The testing aspect of this project was very important, and was the only way to
+have some idea that the program worked as expected. Specifically, these tests
+needed to be automated so that any changes in the behaviour of the program could
+be checked to make sure that they did not break any previous behaviours. Test
+programs were manually written, and then loaded from file.
+
+Testing code goes here, unit tests etc
+
+The correctness of the parser, type checker, and evaluator was tested with the
+HUnit testing framework for Haskell. This tool integrates with the stack build
+tool so that all tests can be run with a single command. Tests themselves were
+small programs-- these small programs were loaded from file, parsed, and then
+type checked. The resulting type was then validated against the expected type
+that was associated with each test file. This system had the advantage that
+the whole process was checked any time that changes were made to the behaviour
+of the type checker.
+
+Certain tests were simply to test the parser aspect of the program but others
+demonstrated key behavior expected from the langauge. These test are covered in
+more deatil in Chapter~\ref{sec:testing}.
+

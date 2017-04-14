@@ -1,5 +1,5 @@
 \chapter{Formal Definitions}\label{sec:formal}
-This chapter attempts to formalize some of the concepts from Chapter~\ref{sec:motivations}.
+This chapter attempts to formalize some of the concepts from Chapter~\ref{sec:motivation}.
 The lambda calculus is introduced as a model of computation and as a system for
 reasoning about features found in programming languages. Types are introduced
 to the lambda calculus as well as other more complex extensions relevant to
@@ -15,7 +15,6 @@ reason about type systems. The lambda calculus can be viewed as a miniature
 programming language and a system where strict properties can be proved.
 
 \begin{figure}[H]\label{fig:lambdaCalc}
-    \centering
     \begin{tabular}{l c p{3cm} r}
         \texttt{t} & $ ::= $ & $ x $ &                   variables \\
       & $ | $ & $ \lambda x $ . \texttt{t} &          function abstraction \\
@@ -32,12 +31,11 @@ concepts are added it becomes more clear how types are useful in programming
 languages.
 
 \begin{figure}[H]\label{fig:simpleCalc}
-    \centering
     \vspace{1cm}
     \textbf{Terms} \\
     \begin{tabular}{l c p{3cm} r}
         \texttt{t} & $ ::= $ & $ x $ &                   variables \\
-      & $ | $ & $ \lambda x : T $ . \texttt{t} &          function abstraction, with type annotations \\
+      & $ | $ & $ \lambda x : $ \texttt{T} . \texttt{t} &          function abstraction, with type annotations \\
       & $ | $ & $ true $ &          true literal \\
       & $ | $ & $ false $ &          false literal \\
       & $ | $ & if \texttt{t} then \texttt{t} else \texttt{t}  &          if-then-else expression \\
@@ -47,7 +45,7 @@ languages.
     \vspace{1cm}
     \textbf{Values} \\
     \begin{tabular}{l c p{3cm} r}
-        \texttt{v} & $ ::= $ & $ \lambda x : T . $ \texttt{t} &                   lambda value \\
+        \texttt{v} & $ ::= $ & $ \lambda x : $ \texttt{T} . \texttt{t} &                   lambda value \\
       & $ | $ & $ true $ &          true literal value \\
       & $ | $ & $ false $ &          false literal value \\
     \end{tabular}
@@ -69,14 +67,14 @@ baddef = if $ \lambda x : Bool . x $ then $ false $  else $ true $
 \end{lstlisting}
 
 This program is constructed according to the grammar of terms. However, is not
-well type according to the typing rules in Figure~\ref{fig:simple-type}.
+well typed according to the typing rules in Figure~\ref{fig:simpleType}. \Note{make this diagram}
 Specifically, the type of the term found in the guard of the if-expression,
 \lstinline[mathescape]{$ \lambda x : Bool . x $} has type
 \lstinline[mathescape]{$ Bool \rightarrow Bool $} but has to be
 \lstinline[mathescape]{$ Bool $} for the term to be considered well typed.
-It makes sense to restrict the kinds of values found in the guard of an if-then-else
+It makes sense to restrict the sorts of values found in the guard of an if-then-else
 expression. Anything other than a boolean value in that place may indicate
-programmer error, which could be as simple as a typing mistake or a fundamental
+programmer error, which could be as simple as a spelling mistake or a fundamental
 misunderstanding of what they are trying to express. Type systems help catch
 these kind of mistakes before program execution. Specifying these rules on top
 of the lambda calculus can be a very informative way of looking at programming
@@ -99,21 +97,20 @@ however more extensions to talk about higher order polymorphism. These extension
 are introduced in Section~\ref{sec:omega}.
 
 \begin{figure}[H]\label{fig:systemF}
-    \centering
     \vspace{1cm}
     \textbf{Terms} \\
     \begin{tabular}{l c p{3cm} r}
         \texttt{t} & $ ::= $ & $ x $ &                   variables \\
-      & $ | $ & $ \lambda x : T $ . \texttt{t} &          function abstraction, with type annotations \\
+      & $ | $ & $ \lambda x : $ \texttt{T} . \texttt{t} &          function abstraction, with type annotations \\
       & $ | $ & \texttt{t} \texttt{t} &          function application \\
       & $ | $ & $ \lambda X $ . \texttt{t} &          type abstraction \\
-      & $ | $ & $ \texttt{t} [\texttt{T}] $ &          type application \\
+      & $ | $ & \texttt{t} [\texttt{T}] &          type application \\
     \end{tabular}
 
     \vspace{1cm}
     \textbf{Values} \\
     \begin{tabular}{l c p{3cm} r}
-        \texttt{v} & $ ::= $ & $ \lambda x : T . $ \texttt{t} &                   lambda value \\
+        \texttt{v} & $ ::= $ & $ \lambda x : \texttt{T} . $ \texttt{t} &                   lambda value \\
       & $ | $ & $ \lambda X . $ \texttt{t} &   type abstraction value \\
     \end{tabular}
 
@@ -138,7 +135,7 @@ id = $ \lambda X . \lambda x: X . x $
 boolId = id [Bool]
 \end{lstlisting}
 
-The example in Listing~\ref{lst:systemF} shows type level lambdas, where $ X $
+This example shows type level lambdas, where $ X $
 is a type variable that has been abstracted out of the function definition. The
 term level lambda abstracts $ x $ which has the type $ X $. Applying \lstinline{id}
 to a type maybe be written as \lstinline[mathescape]{id [Bool]}, which 
@@ -147,9 +144,69 @@ over boolean values. Here $ X $ in the original definition of \lstinline{id} has
 been instantiated with the type of Booleans.
 
 \subsection{System F $\omega$}\label{sec:omega}
-System F $\omega$ is form
+System F $\omega$ is also known as the higher order polymorphic lambda calculus. It
+takes concepts from the polymorphic lambda calculus, or System F, and combines
+these with type constructors described in Section~\ref{sec:tyops}. From a
+programming point of view, System F~$\omega$ allows us to write polymorphic
+functions not only at the level of types, but also in type constructors.
 
-\subsubsection{Type Operators}
+Most usefully System F $\omega$ can be used to build type safe abstractions
+around traditionally impure forms of computation; typically in the form of
+a \textit{monad}. Not only is higher order polymorphism very good at formalizing
+monads, but also very good at combining them. \textit{Monad transformers} are
+a key example, but outside the scope of this paper. An example of monad transformers
+in use can be found in Section~\ref{sec:ctx}. Haskell uses the concepts to
+great effect.
+
+\subsubsection{Type Operators}\label{sec:tyops}
+Type constructors were mentioned in Section~\ref{sec:generics} and this
+section attempts to frame this idea within the lambda calculus. As mentioned
+previously, type constructors can be thought of functions from types to new
+types. Application and abstraction at the level of types can be modelled as a
+type system for the lambda calculus.            
+
+\begin{figure}[H]\label{fig:tyops}
+    \vspace{1cm}
+    \textbf{Terms} \\
+    \begin{tabular}{l c p{3cm} r}
+        \texttt{t} & $ ::= $ & $ x $ &                   variables \\
+      & $ | $ & $ \lambda x : $ \texttt{T} . \texttt{t} &          function abstraction, with type annotations \\
+      & $ | $ & \texttt{t} \texttt{t} &          function application \\
+    \end{tabular}
+
+    \vspace{1cm}
+    \textbf{Values} \\
+    \begin{tabular}{l c p{3cm} r}
+        \texttt{v} & $ ::= $ & $ \lambda x : \texttt{T} . $ \texttt{t} &                   lambda value \\
+    \end{tabular}
+
+    \vspace{1cm}
+    \textbf{Types} \\
+    \begin{tabular}{l c p{3cm} r}
+        \texttt{T} & $ ::= $ & \texttt{T} $ \rightarrow $ \texttt{T} &      type of functions \\
+        & $ | $ & $ \lambda X :: \texttt{K} . \texttt{T} $ &            operator lambda \\
+        & $ | $ & \texttt{T} \texttt{T} &                           operator application \\
+        & $ | $ & $ X $ &       type variables \\
+    \end{tabular}
+
+    \vspace{1cm}
+    \textbf{Kinds} \\
+    \begin{tabular}{l c p{3cm} r}
+        \texttt{K} & $ ::= $ & $ * $ &      kind of concrete types \\
+        & $ | $ & \texttt{K} $ \rightarrow $ \texttt{K} &            kind of type operators
+    \end{tabular}
+
+    \caption{Type operators and Kinding}
+\end{figure}
+
+Kinds play a key role here. Just as types enforce well-formed expressions at
+the level of terms, Kinds are needed to check that expressions at the level of
+types are well formed. In other words, Kinds do not allow non-sensicle expressions
+like \lstinline{Bool Int}, because Bool is not a type constrcutor. Concrete
+types, also called base types, have Kind \lstinline{*}. These are the types
+that may be the type of terms in the lanaguage like \lstinline[mathescape]{false}.
+Type constructors, like \lstinline{List} have kind \lstinline[mathescape]{* \rightarrow *}.
+They need to be parametrized with a type that had kind \lstinline{*}.
 
 \section{Adding Lifetimes}
 showing how lifetimes are represented in this lanaguage

@@ -37,11 +37,10 @@ Integer i = l.get(0);                     // Compile time error here.
 \end{lstlisting}
 
 Compile time errors are much more desirable then runtime errors because they
-can be caught and fixed predictably, unlike runtime errors which may happen at
-unpredictable times. The code in Listing~\ref{lst:generr} parametrizes the
-\lstinline{List} type with the \lstinline{String} type, and hence the last line
-produces a compile time error as the list's \lstinline{get} method returns a
-\lstinline{String}. 
+can be caught and fixed predictably, unlike runtime errors.  The code in
+Listing~\ref{lst:generr} parametrizes the \lstinline{List} type with the
+\lstinline{String} type, and hence the last line produces a compile time error
+as the list's \lstinline{get} method returns a \lstinline{String}. 
 
 \subsubsection{Type Constructors}
 A type constructor is a feature of programming languages that builds new types
@@ -284,7 +283,7 @@ Program structure may be analysed during semantic checking and areas likely to
 cause issue can be identified. Here Rust's way of performing these checks is
 examined.
 
-\subsection{An Introduction to Rust's model of Memory Management}
+\subsection{An Introduction to Rust's Model of Memory Management}
 Rust, a systems programming language~\cite{rust} is designed to provide memory
 safety with no runtime overhead. Rather than relying on a garbage collector to
 provide run-time memory safety, Rust relies on strong compile time checks.
@@ -358,5 +357,7 @@ mean that Rust can enforce the memory safety of programs. These concepts are
 built into the type system.
 
 \section{Representing Programs as Data Structures}
+talk about ASTs here
 
 \section{Type checking}
+talk about ast tree traversal
