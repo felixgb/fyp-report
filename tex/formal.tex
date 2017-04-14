@@ -110,7 +110,7 @@ are introduced in Section~\ref{sec:omega}.
     \vspace{1cm}
     \textbf{Values} \\
     \begin{tabular}{l c p{3cm} r}
-        \texttt{v} & $ ::= $ & $ \lambda x : \texttt{T} . $ \texttt{t} &                   lambda value \\
+        \texttt{v} & $ ::= $ & $ \lambda x : \texttt{T} $ . \texttt{t} &                   lambda value \\
       & $ | $ & $ \lambda X . $ \texttt{t} &   type abstraction value \\
     \end{tabular}
 
@@ -177,7 +177,7 @@ type system for the lambda calculus.
     \vspace{1cm}
     \textbf{Values} \\
     \begin{tabular}{l c p{3cm} r}
-        \texttt{v} & $ ::= $ & $ \lambda x : \texttt{T} . $ \texttt{t} &                   lambda value \\
+        \texttt{v} & $ ::= $ & $ \lambda x : \texttt{T} $ . \texttt{t} &                   lambda value \\
     \end{tabular}
 
     \vspace{1cm}
@@ -208,8 +208,55 @@ that may be the type of terms in the lanaguage like \lstinline[mathescape]{false
 Type constructors, like \lstinline{List} have kind \lstinline[mathescape]{* \rightarrow *}.
 They need to be parametrized with a type that had kind \lstinline{*}.
 
+Type operators combined with System F forms the basis of System F $\omega$.
+In effect System F $\omega$ turns type constructors into first class values of
+the language. Kind annotations are carried over from the lambda calculus with type
+constructors.
+
+\begin{figure}[H]\label{fig:systemfomega}
+    \vspace{1cm}
+    \textbf{Terms} \\
+    \begin{tabular}{l c p{3cm} r}
+        \texttt{t} & $ ::= $ & $ x $ &                   variables \\
+      & $ | $ & $ \lambda x : $ \texttt{T} . \texttt{t} &          function abstraction, with type annotations \\
+      & $ | $ & \texttt{t} \texttt{t} &          function application \\
+      & $ | $ & $ \lambda X :: $ \texttt{K} . \texttt{t} &          type abstraction \\
+      & $ | $ & \texttt{t} [\texttt{T}] &          type application \\
+    \end{tabular}
+
+    \vspace{1cm}
+    \textbf{Values} \\
+    \begin{tabular}{l c p{3cm} r}
+        \texttt{v} & $ ::= $ & $ \lambda x : \texttt{T} $ . \texttt{t} &                   lambda value \\
+         & $ | $ & $ \lambda X :: \texttt{K} $ . \texttt{t} &                   type abstraction value \\
+    \end{tabular}
+
+    \vspace{1cm}
+    \textbf{Types} \\
+    \begin{tabular}{l c p{3cm} r}
+        \texttt{T} & $ ::= $ & \texttt{T} $ \rightarrow $ \texttt{T} &      type of functions \\
+        & $ | $ & $ \lambda X :: \texttt{K} . \texttt{T} $ &            operator lambda \\
+        & $ | $ & \texttt{T} \texttt{T} &                           operator application \\
+        & $ | $ & $ X $ &       type variables \\
+        & $ | $ & $ \forall X :: $ \texttt{K} . \texttt{t} &       universal type \\
+    \end{tabular}
+
+    \vspace{1cm}
+    \textbf{Kinds} \\
+    \begin{tabular}{l c p{3cm} r}
+        \texttt{K} & $ ::= $ & $ * $ &      kind of concrete types \\
+        & $ | $ & \texttt{K} $ \rightarrow $ \texttt{K} &            kind of type operators
+    \end{tabular}
+
+    \caption{System F $\omega$}
+\end{figure}
+
+\subsubsection{Examples}
+examples of programming in System F $\omega$
+
 \section{Adding Lifetimes}
-showing how lifetimes are represented in this lanaguage
+syntax of lifetimes
 
 \section{Final Typing Rules}
+final grammar and typing derivations for the language
 

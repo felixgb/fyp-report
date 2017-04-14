@@ -161,62 +161,62 @@ all types are well formed.
         $ K $ & $ ::= $ & * &                   Concrete types \\
       & $ | $ & $ K \rightarrow K $ &           Type functions from types to types \\
     \end{tabular}
-    \caption{Syntax of types}
+    \caption{Syntax of Kinds}
 \end{figure}
 
 %%% unfuck this thing
-
-\begin{figure}[h]\label{fig:kindexamples}
-    \centering
-    \begin{tikzpicture}[every node/.style={draw=none}]
-        \node at (0, 0) (k){$ * $};
-        \node at (13, 0) (k2k){$ * \rightarrow * $};
-        \node at (17, 0) (k2k2k){$ * \rightarrow * \rightarrow * $};
-        \node at (24, 0) (kk2k){$ (* \rightarrow *) \rightarrow * $};
-
-        \node[below left=of k] (int) {\texttt{Int}};
-        \node[below right=of int, xshift=-1cm] (listInt) {\texttt{List[Int]}};
-        \node[above right=of listInt, xshift=-2cm] (pairInt) {\texttt{Pair[Int, Int]}};
-
-        \node[below=of int, yshift=-2cm] (val) {\texttt{1}};
-        \node[below right=of val, xshift=-2cm] (listVal) {\texttt{[1, 2, 3]}};
-        \node[above right=of listVal, xshift=-2cm] (pairVal) {\texttt{(1, 2)}};
-
-        \node (proper) [draw, fit= (k) (int) (listInt) (pairInt) (val) (listVal) (pairVal)] {};
-        \node[yshift=3.0ex] at (proper.north) {\textit{Proper}};
-
-        \draw[->] (val) -- (int);
-        \draw[->] (listVal) -- (listInt);
-        \draw[->] (pairVal) -- (pairInt);
-
-        \draw[->] (int) -- (k);
-        \draw[->] (listInt) -- (k);
-        \draw[->] (pairInt) -- (k);
-
-        %%% first order
-        \node[below=of k2k] (list) {\texttt{List}};
-        \node[below=of k2k2k] (pair) {\texttt{Pair}};
-
-        \draw[->] (list) -- (k2k);
-        \draw[->] (pair) -- (k2k2k);
-
-        \node (first) [draw, fit= (k2k) (k2k2k) (list) (pair)] {};
-        \node[yshift=3.0ex] at (first.north) {\textit{First Order}};
-
-        %%% higher order
-        \node[below=of kk2k] (functor) {\texttt{Functor}};
-
-        \draw[->] (functor) -- (kk2k);
-
-        \node (higher) [draw, fit= (functor) (kk2k)] {};
-        \node[yshift=3.0ex] at (higher.north) {\textit{Higher Order}};
-
-        \node[left=of k, xshift=-3cm] (kinds) {\textit{Kind}};
-        \node[left=of int] (type) {\textit{Type}};
-        \node[left=of val] (value) {\textit{Value}};
-    \end{tikzpicture}
-    \caption{Some types and their associated kinds.}
-\end{figure}
+% 
+% \begin{figure}[h]\label{fig:kindexamples}
+%     \centering
+%     \begin{tikzpicture}[every node/.style={draw=none}]
+%         \node at (0, 0) (k){$ * $};
+%         \node at (13, 0) (k2k){$ * \rightarrow * $};
+%         \node at (17, 0) (k2k2k){$ * \rightarrow * \rightarrow * $};
+%         \node at (24, 0) (kk2k){$ (* \rightarrow *) \rightarrow * $};
+% 
+%         \node[below left=of k] (int) {\texttt{Int}};
+%         \node[below right=of int, xshift=-1cm] (listInt) {\texttt{List[Int]}};
+%         \node[above right=of listInt, xshift=-2cm] (pairInt) {\texttt{Pair[Int, Int]}};
+% 
+%         \node[below=of int, yshift=-2cm] (val) {\texttt{1}};
+%         \node[below right=of val, xshift=-2cm] (listVal) {\texttt{[1, 2, 3]}};
+%         \node[above right=of listVal, xshift=-2cm] (pairVal) {\texttt{(1, 2)}};
+% 
+%         \node (proper) [draw, fit= (k) (int) (listInt) (pairInt) (val) (listVal) (pairVal)] {};
+%         \node[yshift=3.0ex] at (proper.north) {\textit{Proper}};
+% 
+%         \draw[->] (val) -- (int);
+%         \draw[->] (listVal) -- (listInt);
+%         \draw[->] (pairVal) -- (pairInt);
+% 
+%         \draw[->] (int) -- (k);
+%         \draw[->] (listInt) -- (k);
+%         \draw[->] (pairInt) -- (k);
+% 
+%         %%% first order
+%         \node[below=of k2k] (list) {\texttt{List}};
+%         \node[below=of k2k2k] (pair) {\texttt{Pair}};
+% 
+%         \draw[->] (list) -- (k2k);
+%         \draw[->] (pair) -- (k2k2k);
+% 
+%         \node (first) [draw, fit= (k2k) (k2k2k) (list) (pair)] {};
+%         \node[yshift=3.0ex] at (first.north) {\textit{First Order}};
+% 
+%         %%% higher order
+%         \node[below=of kk2k] (functor) {\texttt{Functor}};
+% 
+%         \draw[->] (functor) -- (kk2k);
+% 
+%         \node (higher) [draw, fit= (functor) (kk2k)] {};
+%         \node[yshift=3.0ex] at (higher.north) {\textit{Higher Order}};
+% 
+%         \node[left=of k, xshift=-3cm] (kinds) {\textit{Kind}};
+%         \node[left=of int] (type) {\textit{Type}};
+%         \node[left=of val] (value) {\textit{Value}};
+%     \end{tikzpicture}
+%     \caption{Some types and their associated kinds.}
+% \end{figure}
 
 \section{Problems with Existing Memory Management Techniques}
 Most programming languages allow for dynamic memory management where the

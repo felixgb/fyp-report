@@ -1,1 +1,30 @@
 \chapter{Key Tests}\label{sec:testing}
+
+\begin{lstlisting}[mathescape, caption={Identity function}, label={lst:id}]
+id: (X, 'a) $\rightarrow$ (X, 'a)
+id = $\lambda$X:: * . $\lambda$'a . $\lambda$x: (X, 'a) . x
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape, caption={Addition of two references}, label={lst:add}]
+add: (&Int, 'a) $\rightarrow$ (&Int, 'b) $\rightarrow$ (Int, min('a, 'b))
+add = $\lambda$'a . $\lambda$'b . $\lambda$x: (&Int, 'a) . $\lambda$y: (&Int, 'b) . &x + &y
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape, caption={Function composition}, label={lst:compose}]
+compose: ((B, 'a) $\rightarrow$ (C, 'a)) $\rightarrow$ ((A, 'a) $\rightarrow$ (B, 'a)) $\rightarrow$ (A, 'a) $\rightarrow$ (C, 'a)
+compose = $\lambda$A:: * . $\lambda$B:: * . $\lambda$C:: * .
+     $\lambda$'a .
+        $\lambda$f: (B, 'a) $\rightarrow$ (C, 'a) .
+            $\lambda$g: (A, 'a) $\rightarrow$ (C, 'a) .
+                $\lambda$x: (A, 'a) . f (g x)
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape, caption={Double Function application}, label={lst:double}]
+double: 
+double = $\lambda$X:: * . $\lambda$a' . $\lambda$f: (X, 'a) $\rightarrow$ (X, 'a) . $\lambda$x:(X, 'a) . f (f x)
+\end{lstlisting}
+
+\begin{lstlisting}[mathescape, caption={Quadruple application function using double}, label={lst:quad}]
+quad: 
+quad = $\lambda$X:: * . $\lambda$'a . double [X $\rightarrow$ X] a' (double [X] 'a)
+\end{lstlisting}

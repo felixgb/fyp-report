@@ -21,8 +21,8 @@ implementation language. These include:
 \begin{itemize}
     \item Algebraic data types, which are very good at representing abstract syntax
     trees, used to describe programming languages.
-    \item Pattern matching, which is useful for deconstruct abstract syntax trees.
-    \item A wealth of effective parsing libraries, over several paradigms.
+    \item Pattern matching, which is useful for deconstructing abstract syntax trees.
+    \item A wealth of effective parsing libraries, convening several paradigms.
     \item Idiomatic monadic programming, which can be used to reduce error handling
     and state threading boilerplate out of the logic of the program.
 \end{itemize}
@@ -39,15 +39,15 @@ easy to compile and test the project as well as managing libraries. Several
 commands were very useful in managing the project, including \lstinline{stack build}
 to compile all changes to the project and \lstinline{stack test} which
 ran all of the tests for the project. The lexer and parser generator source
-files were not Haskell source files but files that specify how Haskell source
+files were not Haskell source files but instead specify how Haskell source
 files should be built. These tools are described in detail in later sections
 but Stack was used to automate the building of these tools as well. Finally,
-stack provides an interface to an interactive interpreter for Haskell, GHCI.
+Stack provides an interface to an interactive interpreter for Haskell, GHCI.
 This tool was used extensively to test parts of the project as they were being
 developed.
 
 \section{Parsing}
-A lexer generator Alex~\cite{alex}, and parser generator, Happy~\cite{happy}
+A lexer generator, Alex~\cite{alex}, and parser generator, Happy~\cite{happy},
 were used in this project. Using these tools in combination made parsing the
 language into the Haskell representation of the abstract syntax simple.  The
 grammars provided for the parser generator are a very close approximation of
@@ -106,8 +106,8 @@ terms. An initial walk of the tree replaces dummy values with the
 \lstinline{LiLit} value that represents the depth of the scope that the
 lifetime value is found in.
 
-\subsubsection{Ordering on Lifetimes}
-should probably write this, Ord instance for lifetimes.
+% \subsubsection{Ordering on Lifetimes}
+% should probably write this, Ord instance for lifetimes.
 
 \subsection{Type Checking}
 Type checking is rather involved in this this language as the type system
@@ -144,7 +144,7 @@ data LangErr
     deriving (Eq, Show)
 \end{lstlisting}
 
-This has the advantage of being very compose able, and also of reducing error
+This has the advantage of being very composeable and also of reducing error
 handling boilerplate in the program.
 
 \subsection{Context Management}\label{sec:ctx}
@@ -165,7 +165,7 @@ data Env = Env
     } deriving (Show, Eq)
 \end{lstlisting}
 
-The monad stack where parsing, lifetime checking, kind checking, and type
+The monad transformer stack where parsing, lifetime checking, kind checking, and type
 checking take place is therefore:
 
 \begin{lstlisting}[caption=Envirnment and error monad stack., language=Haskell, label={lst:monads}]
