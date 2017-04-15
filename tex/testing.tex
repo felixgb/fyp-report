@@ -1,5 +1,13 @@
 \chapter{Key Tests}\label{sec:testing}
 
+This section describes key test programs that demonstarte programming
+with higher kinded types and lifetimes. The syntax the language is described
+in Chapter~\ref{sec:formal}. Additional constructs have been added for clarity,
+such as allowing a term to be defined with a name.
+
+\section{Basic tests}
+Here basic aspects such as definition
+
 \begin{lstlisting}[mathescape, caption={Identity function}, label={lst:id}]
 id: (X, 'a) $\rightarrow$ (X, 'a)
 id = $\lambda$X:: * . $\lambda$'a . $\lambda$x: (X, 'a) . x
