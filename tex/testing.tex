@@ -1,22 +1,69 @@
 \chapter{Key Tests}\label{sec:testing}
 
-This section describes key test programs that demonstarte programming
+This section describes key test programs that demonstrate programming
 with higher kinded types and lifetimes. The syntax the language is described
 in Chapter~\ref{sec:formal}. Additional constructs have been added for clarity,
 such as allowing a term to be defined with a name.
 
-\section{Basic tests}
-Here basic aspects such as definition
+\section{Simple Programs}
+The programs in this section serve as an introduction to the language syntax
+and style, without introducing more advanced features. Some of the examples are
+polymorphic in their type.
+
+\subsection{Polymorphic Identity Function}
+This example shows the polymorphic identity function:
 
 \begin{lstlisting}[mathescape, caption={Identity function}, label={lst:id}]
 id: (X, 'a) $\rightarrow$ (X, 'a)
 id = $\lambda$X:: * . $\lambda$'a . $\lambda$x: (X, 'a) . x
 \end{lstlisting}
 
+Above, the type of the function is give. All function parameters are associated
+with a lifetime as well as a type. This is what is meant by the pair
+\lstinline[mathescape]{(X, 'a)}.  Here \lstinline{X} is a type parameter which
+is introduced starting in the scope of the function
+\lstinline[mathescape]{$\lambda$X::* .}. The while \lstinline{id} term must be
+applied to type first, as the type lambda expression is outermost. The type
+that the expression is applied to must be of kind \lstinline{*}, like
+\lstinline{Int} or \lstinline[mathescape]{X $\rightarrow$ X}. For example,
+\lstinline{id [Int]} is type correct. 
+
+The term \lstinline[mathescape]{$\lambda$'a .}\ldots is a lifetime lambda.
+This term must be applied to some lifetime expression, such as another lifetime
+variable or a static lifetime.
+
+\subsection{Multiple Lifetimes and References}
+More concepts are introduced in this example:
+
 \begin{lstlisting}[mathescape, caption={Addition of two references}, label={lst:add}]
 add: (&Int, 'a) $\rightarrow$ (&Int, 'b) $\rightarrow$ (Int, min('a, 'b))
-add = $\lambda$'a . $\lambda$'b . $\lambda$x: (&Int, 'a) . $\lambda$y: (&Int, 'b) . &x + &y
+add = $\lambda$'a . $\lambda$'b . $\lambda$x: (&Int, 'a) . $\lambda$y: (&Int, 'b) . !x + !y
 \end{lstlisting}
+
+Here the dereference operator is used to get the values in the locations held
+by \lstinline{x} and \lstinline{y}. Both of these variables have the type of
+references of \lstinline{Int}, demonstrated in the type, \lstinline{&Int}.
+These values have an associated lifetime, or the length that they will exist in
+memory for. The lifetime of the whole resulting expression is the either
+\lstinline{'a} or \lstinline{'b}, whichever exists for the shortest length of
+time. In other words, whichever lifetime is at the top of the stack. \Note{not
+very descriptive here}
+
+It is quite useful to have multiple lifetimes bound here. \lstinline{x} may exist
+for a different length of time then \lstinline{y}. A common real world example
+would be searching for some value in a larger data structure; the value to
+search for would only need to exist for the length of the search function, whereas the
+structure being search might need to exist for a much longer time.
+
+\subsection{Higher Order Functions}
+This example shows functions being used as first class values in the language,
+which is not very interesting in itself, but the type signatures of the
+functions are of note. In the simply typed lambda calculus, functions may have type
+\lstinline[mathescape]{X $\rightarrow$ X}. Here, functions must annotate the
+variable that they bind with a lifetime as well as a type. Hence, a function
+might have the signature \lstinline[mathescape]{(X, 'a) $\rightarrow$ (X, 'a)},
+meaning that a function takes a value of type \lstinline{X} that lives for
+\lstinline{'a} and return a value of the same type and lifetime. 
 
 \begin{lstlisting}[mathescape, caption={Function composition}, label={lst:compose}]
 compose: ((B, 'a) $\rightarrow$ (C, 'a)) $\rightarrow$ ((A, 'a) $\rightarrow$ (B, 'a)) $\rightarrow$ (A, 'a) $\rightarrow$ (C, 'a)
@@ -26,6 +73,22 @@ compose = $\lambda$A:: * . $\lambda$B:: * . $\lambda$C:: * .
             $\lambda$g: (A, 'a) $\rightarrow$ (C, 'a) .
                 $\lambda$x: (A, 'a) . f (g x)
 \end{lstlisting}
+
+The signatures of \lstinline{f} and \lstinline{g} show that they may return
+values with different types, but the same lifetimes. In fact, all values in
+this version of \lstinline{compose} must live for the same length of time.
+
+\section{Higher Order
+
+\section{Memory safety}
+The intention of this section is to show how programs written in an unsafe
+language, like C, can be transformed into a language with memory safety. 
+Specifically, problems in C programs will be highlighted and an equivalent
+program will be shown that does not compile.
+
+dangle example, calc example that does not typecheck, explain why
+\section{Basic tests}
+Here basic aspects such as definition
 
 \begin{lstlisting}[mathescape, caption={Double Function application}, label={lst:double}]
 double: 

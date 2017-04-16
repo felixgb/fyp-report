@@ -1,0 +1,10 @@
+Hi, just as an aside from the report- the other week I asked about the meaning
+of "omega" in System F omega. I *think* I might have a rough idea why, maybe.
+
+In the simply typed lambda calculus there's no abstraction over types obviously.
+The only kind of abstraction you can have is over values. So it makes sense
+that System F is sometimes called the second order lambda calculus, because
+you can have abstraction over types as well, through type lambdas. So the
+simply typed lambda calculus is level 1, and System F is level 2.
+
+The next bit i'm a bit hazy about[cc
