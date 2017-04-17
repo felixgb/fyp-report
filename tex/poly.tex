@@ -1,16 +1,16 @@
 \chapter{Parametric Polymorphism}\label{sec:poly}
 This section introduces Parametric Polymorphism, which is found in many
-programming languages including Generics in Java. It is used to make
-programming languages more expressive while attempting to prevent errors from
-occurring at runtime.  Polymorphism is one way of sticking to a core
-programming principle: Functionality in a program should only be implemented in
-one place in the source code. If different functions are meant to do very
-similar things, it is generally beneficial to combine them into one by
-parametrizing sections that differ. This allows code to be updated, maintained,
-and deleted more easily and so becomes very necessary in large codebases.  This
-parametrizing of areas of code is known as abstraction. Abstraction at the
-levels of values is very common in the form of functions; parametric
-polymorphism allows for the abstraction at the level of types.
+programming languages. It is used to make programming languages more expressive
+while attempting to prevent errors from occurring at runtime.  Polymorphism is
+one way of sticking to a core programming principle: Functionality in a program
+should only be implemented in one place in the source code. If different
+functions are meant to do very similar things, it is generally beneficial to
+combine them into one by parametrizing sections that differ. This allows code
+to be updated, maintained, and deleted more easily and so becomes very
+necessary in large codebases.  This parametrizing of areas of code is known as
+abstraction. Abstraction at the levels of values is very common in the form of
+functions; parametric polymorphism allows for the abstraction at the level of
+types.
 
 The rest of this chapter attempts to explain how polymorphism is useful, and
 how it is used in languages like Java to reduce code duplication and increase
@@ -147,7 +147,7 @@ shows what could potentially go wrong in this situation:
 \begin{lstlisting}[nolol, language=Java, label={lst:casterr}]
 List list = new List();
 list.add(new Boolean(true));
-String firstElem = (String) list.getAt(0);      // This line will compile, but is obviously wrong
+String firstElem = (String) list.getAt(0);      // This line will compile
 \end{lstlisting}
 
 The above code compiles but will throw a \lstinline{ClassCastException} when
@@ -155,17 +155,20 @@ run because String is not a subclass of Boolean. The Java compiler cannot tell
 from the above that the list object is holding \lstinline{Boolean} values, so
 cannot warn the programmer that the above code does not make sense. Any safety
 provided by the type system has been subverted and the code may be in
-production somewhere before the obvious error is detected by a human. This is
-the kind of problem that Java's Generics were intended to solve.
+production somewhere before the obvious error is detected by a human, or worse,
+throws a runtime exception. This is the kind of problem that Java's Generics
+were intended to solve.
 
 \section{Parametrizing Constructors}
-Just as methods in Java may have parameters that abstract values out of the
-method body, Generics allow types to be abstracted out of the implementation of
-a class. When a class is constructed a type can be passed in as an argument
-which can be referenced by the methods that the class provides. This has the
-benefit that code can be type-checked at compile time. Casting, as demonstrated
-in Section~\ref{sec:nopoly}, can lead to nefarious run time errors which can be
-difficult to find before they cause errors.
+Just as methods in Java may have formal parameters that abstract values out of
+the method body, Generics allow types to be abstracted out of the
+implementation of a class. When a class is constructed a type can be passed in
+as an argument which can be referenced by the methods that the class provides.
+The type that is passed into a class is referenced with a type variable, just
+is arguments to methods are referenced by variables in the scope of that
+method.  This has the benefit that code can be type-checked at compile time.
+Casting, as demonstrated in Section~\ref{sec:nopoly}, can lead to run
+time errors which can be difficult to find before they cause errors.
 
 With Generics the list example from the previous section can be implemented
 like this:
@@ -185,8 +188,8 @@ class List<T> {
 }
 \end{lstlisting}
 
-Here the list is parametrized with some unknown type, \lstinline{T}, in the
-declaration \lstinline{class List<T>}. When an instance of this class is
+Here the list is parametrized with some as yet unknown type, \lstinline{T}, in
+the declaration \lstinline{class List<T>}. When an instance of this class is
 created a type is passed into the constructor and the instance becomes a new,
 specific type of list holding objects of that type. This list can be used like
 this:
@@ -216,7 +219,7 @@ does not matter. This is where parametric polymorphism is most useful.
 Binary trees are another example of a data structure that can store any type of
 object. A node in a binary tree can either be empty, or hold an element and a
 pointer to two other nodes. The element that is held in that tree can be of any
-type- a perfect opportunity to use generics. The implementation could look
+type-- a perfect opportunity to use generics. The implementation could look
 something like this:
 
 \begin{lstlisting}[caption={Binary tree with generics}, language=Java, label={lst:generictree}]
@@ -240,22 +243,23 @@ class Tree<T> {
 
 Very similarly to the list implementation, the tree class must be instantiated
 with some type, referred to as \lstinline{T} in the body of the class.
-Additionally, both of these data structures act as generic containers.
+Both of these data structures act as generic containers.
 
 This kind of abstraction, where types are parametrized in the body of classes,
 is known as first-order polymorphism. This notion is formalized in language
 called System F, described in Chapter~\ref{sec:formal}. However this report
 attempts to explain higher-order polymorphism, a concept that cannot be
-expressed in languages like Java. In order to understand why how higher order
-polymorphism is useful it is important to understand some additional concepts.
+expressed in languages like Java. In order to understand why higher order
+polymorphism is useful and why it cannot be expressed in Java it is important
+to understand some additional concepts.
 
-\section{\lstinline{map} and Higher Order Functions}\label{sec:hof}
+\section{\texttt{map} and Higher Order Functions}\label{sec:hof}
 As mentioned, both the list in Listing \ref{lst:genericlist} and the tree in
 Listing \ref{lst:generictree} can be thought of as containers that hold some
 type of object. It is very common in programs to apply a function to every
 element in collection. In Java, this is commonly expressed with a for-each
-loop. For example, to get a new list by adding one to every element from the
-old list one would write:
+loop. For example, to get a new list of integers by adding one to every element
+from an old list of integers one would write:
 
 \begin{lstlisting}[nolol, language=Java, label={lst:forloop}]
 List<Integer> intList = new ArrayList<>();
@@ -276,7 +280,7 @@ It would be nice if one could apply the same kind of transformation to the
 binary tree that we defined, without worrying details of tree traversal in this
 section of program.
 
-In functional programming this problem is solved by specific higher-order
+In functional programming this problem is solved by a specific higher-order
 function, commonly called \lstinline{map}.  A higher-order function one that
 takes another function as a parameter. \lstinline{map} as defined for our list
 class would take a function as a parameter and apply that function to every
@@ -293,17 +297,87 @@ List<Integer> outList = intList
     .map((x) -> addOne(x));     // Define an lambda function to pass to map
 \end{lstlisting}
 
-Here a lambda function is declared using Java 8 lambda syntax, the function
-\lstinline{(x) -> addOne(x)} is declared as a without a name and passed to the
-higher-order function, \lstinline{map}. The lambda function is then applied to
-every element of the list and a new list is returned. 
+Here a lambda function is declared using Java 8 lambda syntax. The function
+\lstinline{(x) -> addOne(x)} is declared as a without a name and passed as an
+argument to the higher-order function, \lstinline{map}. The lambda function is
+then applied to every element of the list and a new list is returned. 
 
 The map function can be declared for any class that acts as a container holding
 other values. It takes a function as a parameter and applies this function to
-every the contents of that container. In j
+every the contents of that container. It would make sense to have a map
+function for both lists and trees. It would also make sense to try define an
+interface for containers that can be mapped over in this manner.
 
-of \lstinline{map} 
+\section{\texttt{Functor} and Mapping over Containers}
+Having an interface for containers that can be mapped over would be useful.
+Any time we wanted to apply a function to every element in a container we could
+pass a transforming function to the \lstinline{map} function which the
+interface would provide and not have to worry about the implementation details
+of iterating over every single element. Even if the type of collection were to
+change, e.g.\ using a tree instead of a list, the transformation would hold
+because both of the classes would implement the interface. This concept of a
+mappable container is typically called Functor. We can try and write an
+interface for this concept in Java:
 
+\begin{lstlisting}[caption=An attempt to define Functor in Java., language=Java, label={lst:javaFunctor}]
+interface Functor<A> {
+    Functor<B> map(Function<A, B> f);
+}
+\end{lstlisting}
+
+At first glance this interface seems to be acceptable. The interface takes a
+type parameter, \lstinline{A}, which is the type of the element that the
+container holds. One method is defined, \lstinline{map}, which takes a function \lstinline{f}
+as a parameter. \lstinline{f} has a generic type; it takes an object
+of type \lstinline{A} and returns an object of type \lstinline{B}. \lstinline{map}
+itself returns an object than implements \lstinline{Functor} with elements of
+type \lstinline{B}. 
+
+However the return type of \lstinline{map} is not sufficient. It may return an
+object of any class that implements \lstinline{Functor}, which will have the
+correct type of elements \lstinline{B}, but will not be more specific than
+that. Casting would be needed to use the collection again:
+
+\begin{lstlisting}[nolol, language=Java, label={lst:map}]
+List<Integer> intList = new ArrayList<>();
+intList.add(1);
+intList.add(2);
+intList.add(3);
+
+// Before casting, the result of map is just Functor<Integer>
+List<Integer> outList = (List<Integer>) intList.map((x) -> addOne(x));
+\end{lstlisting}
+
+This results in a similar situation to the one described in the example of the
+list that held only \lstinline{Object} in Listing~\ref{lst:abstractlist}.
+Casting is needed to use the return value of \lstinline{map} as a list, so is
+necessary if we wanted to use any list specific methods or pass it into a
+function that expects a list as an argument. Again, casting is not an ideal
+solution because it is susceptible to run time exceptions. In other words, this
+Functor interface cannot be used in a type safe manner.
+
+In order to define a generic Functor interface, where the return type of
+\lstinline{map} is the same as the class that implements functor, we need to
+reference that class that implements the interface inside the interface itself.
+In other words, \lstinline{map} must know that it returns a \lstinline{List}
+when the list class implements Functor, or a \lstinline{Tree} when the tree
+class implements Functor. Hypothetically, this interface might look something
+like:
+
+\begin{lstlisting}[caption=Hypothetical type safe functor in Java, language=Java, label={lst:fakefunctor}]
+interface Functor<F<A>> {
+    F<B> map(Function<A, B> f);
+}
+\end{lstlisting}
+
+Note that this is not valid Java. In the type parameter to this version of the
+interface we define a generic class constructor, \lstinline{F}, that itself
+take a single generic type parameter, \lstinline{A}. The map function then
+returns the \textit{same} generic class, but parametrized with the result type
+\lstinline{B}. In this manner we could constrain the map function to return the
+same instance of Functor that it is called from.
+
+\section{Higher Kinded Types}
 
 %
 %\section{Higher Kinded Types}
@@ -395,19 +469,6 @@ of \lstinline{map}
 %}
 %\end{lstlisting}
 %
-%The code in Listing~\ref{lst:javaFunctor} has one main issue. The
-%\lstinline{map} method defined here may return any type that implements
-%\lstinline{Functor}, not the necessarily the same class as the one that the
-%method has been called from. This means that there is no type-safe way of
-%calling any method on the result of calling the \lstinline{map} function.
-%
-%In order to define a generic Functor interface, a way of referencing the type
-%constructor that is being used as a functor is needed. In other worlds, the
-%programming language needs type constructors that can be parametrized with
-%other type constructors. Generics in Java provide a way of making types like
-%\lstinline{Integer}, \lstinline{String}, and even \lstinline{List<Integer>}
-%first class, but type constructors like \lstinline{List} must be applied to
-%some concrete type before they can be abstracted over.
 %
 %\begin{lstlisting}[caption=Functor as defined in Haskell., language=Haskell, label={lst:haskellFunctor}]
 %class Functor f where

@@ -26,14 +26,24 @@
 \usepackage{float}
 \usepackage{datetime}
 \usepackage{amsfonts, amsmath, amsthm, amssymb} % For math fonts, symbols and environments
+\usepackage{sourcecodepro}
 
 \bibliography{fyp.bib}
 \usetikzlibrary{automata, arrows, positioning, calc, fit}
 
+
+\definecolor{commentcolor}{rgb}{0.51,0.58,0.57}
+\definecolor{keywordcolor}{rgb}{0.16,0.63,0.59}
+\definecolor{stringcolor}{rgb}{0.34,0.43,0.76}
+
 \lstset{%
     basicstyle=\footnotesize\ttfamily,
     captionpos=b,
-    xleftmargin=1cm
+    xleftmargin=0.5cm,
+    showstringspaces=false,
+    commentstyle=\color{commentcolor},
+    keywordstyle=\color{keywordcolor},
+    stringstyle=\color{stringcolor}
 }
 
 \title{Lambda Calculus with Fun and Higher Kinded Types \\
