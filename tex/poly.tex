@@ -1,0 +1,452 @@
+\chapter{Parametric Polymorphism}\label{sec:poly}
+This section introduces Parametric Polymorphism, which is found in many
+programming languages including Generics in Java. It is used to make
+programming languages more expressive while attempting to prevent errors from
+occurring at runtime.  Polymorphism is one way of sticking to a core
+programming principle: Functionality in a program should only be implemented in
+one place in the source code. If different functions are meant to do very
+similar things, it is generally beneficial to combine them into one by
+parametrizing sections that differ. This allows code to be updated, maintained,
+and deleted more easily and so becomes even more essential in large codebases.
+This parametrizing of areas of code is known as abstraction. Abstraction at the
+levels of values is very common in the form of functions; Parametric
+polymorphism allows for the abstraction at the level of types.
+
+The rest of this chapter attempts to explain how polymorphism is useful, and how
+it is used in languages like Java to reduce code duplication and increase
+expressiveness. Generics, or parametric polymorphism in Java, is used extensively
+in Java's collections framework, which provides very general data structures
+for organizing data in programs. These structures are practical to implement
+and use partly because of Generics.
+
+Finally, Functors are introduced as an concept that we would like to be able to
+represent and use in a programming language, but cannot do so in languages with
+the expressive power of Java. Higher Kinded Types are introduced to provide
+very generic solutions to programming problems, and form the basis of a large
+part of this project.
+
+\section{A World Without Generics}
+In software engineering one of the code principles to keep in mind when
+attempting to write software is Don't Repeat Yourself, known as the DRY
+principle. If lots of similar behaviour exists in different places in a
+codebase, then a change to this behaviour will result in the code being
+modified in several places.  Such changes to behaviour are common; and not
+applying changes to one area while applying them to another area can be a
+source of bugs. There are other reasons not repeat oneself in a codebase as
+well, less time is spent writing code if a function only has to be
+written once.
+
+As an example, consider writing a list class to store some strings in a
+language like Java. The class may have an implementation that looks something like
+this:
+
+\begin{lstlisting}[caption=String List in Java, language=Java, label={lst:javastringlist}]
+class StringList {
+
+    public boolean add(String e) {
+        // implementation...
+    }
+
+    public String getAt(int index) {
+        // Get the string at position index...
+    }
+
+    public int size() {
+    }
+
+    // other sensible methods that you might want in a list...
+}
+\end{lstlisting}
+
+This seems all very well and good. However, at a different part of the program
+we might want to have a list of \lstinline{Booleans}s:
+
+\begin{lstlisting}[caption=A very similar class, language=Java, label={lst:javaboolist}]
+class BoolList {
+
+    public boolean add(Bool e) {
+        // add a boolean to the list
+    }
+
+    public Boolean getAt(int index) {
+        // Get the bool at position index...
+    }
+
+    public int size() {
+    }
+}
+
+The similarity between these classes is obvious: the methods that they
+implement are very similar except for the type that present. \lstinline{BoolList}'s
+\lstinline{getAt} methods returns a \lstinline{Boolean}, and \lstinline{StringList}'s
+\lstinline{getAt} returns a \lstinline{String}. It is easy to see that the
+implemenation for both of the \lstlisting{getAt} methods would be very similar.
+Now imagine if there was a bug in the implementation of this method. This bug
+would likely be present in both of the implementations and so a programmer would
+have to fix both of these classes. 
+that there was 
+\end{lstlisting}
+
+project?
+This chapter attempts to give some background for the topics covered in this
+project. Aspects from existing type systems are introduced and explained.
+Later an introduction to how programming lanagauges are represented as trees is
+given, as well as a how these trees can be traversed in order to build a type 
+checker. \Note{fix this sentence}
+
+\section{Higher Kinded Types}
+This section introduces Higher Kinded Types, also known as higher order
+polymorphism, and demonstrates the expressive power of this concept though
+examples.
+
+\subsection{Parametric Polymorphism}\label{sec:generics}
+First order parametric polymorphism, known as Generics in Java, are types that
+are parametrized over some other type. This kind of polymorphism allows for the
+definition and use of functions that behave uniformly over all types.  They can
+be used to write code that can be checked for safety at compile time. For
+example, without generics, a list could be used like:
+
+\begin{lstlisting}[caption=Runtime error that could be avoided, language=Java, label={lst:javaerr}]
+List l = new ArrayList();
+l.add("This is a string");
+Integer i = (Integer) l.get(0); // Run time error here
+\end{lstlisting}
+
+This is problematic because a list in Java can contain any type of object, but
+methods that the \lstinline{List} object provides must know about the type of
+object that the list contains. If those methods do not have a way of knowing
+what kind of object a list contains then calling the methods will not be type
+safe, as demonstrated in Listing~\ref{lst:javaerr}. The same code written with
+Java's Generics will produce a compile time error:
+
+\begin{lstlisting}[caption=Compile time error, language=Java, label={lst:generr}]
+List<String> l = new ArrayList<String>(); // Now the list has been parametrized with a type
+l.add("This is a string");
+Integer i = l.get(0);                     // Compile time error here.
+\end{lstlisting}
+
+Compile time errors are much more desirable then runtime errors because they
+can be caught and fixed predictably, unlike runtime errors.  The code in
+Listing~\ref{lst:generr} parametrizes the \lstinline{List} type with the
+\lstinline{String} type, and hence the last line produces a compile time error
+as the list's \lstinline{get} method returns a \lstinline{String}. 
+
+\subsubsection{Type Constructors}
+A type constructor is a feature of programming languages that builds new types
+from old ones. In Java, an example would be the \lstinline{List} type. The
+\lstinline{List} type cannot be used to describe some value in Java; all values
+must be a \lstinline{List} \textit{of} something, for example a
+\lstinline{List<String>}.  In other words, \lstinline{List} is a type
+constructor that must be parametrized with some base type like
+\lstinline{Integer}, \lstinline{String}, or even \lstinline{List<String>}. Once
+it has been applied to some base type, it becomes a new type;
+\lstinline{List<Integer>}, \lstinline{List<String>}, and
+\lstinline{List<List<String>>} are all separate types.
+
+Parametric polymorphism is an important addition to statically typed
+programming languages. First order polymorphism is modelled by a typed lambda
+calculus called System F, which is introduced in Section~\ref{sec:systemF}.
+However, Generics in Java and in lots of other programming languages leave
+something to be desired.  There are higher level, general, generic programming
+concepts that cannot be expressed with first order polymorphism. Generally,
+these systems are constrained in that type constructors may only be
+parametrized by concrete types, and not other type constructors. Higher order
+polymorphism is needed in order to neatly express some programming concepts.
+
+\subsection{Higher Order Polymorphism}
+As mentioned in Section~\ref{sec:generics}, first order parametric polymorphism
+can be very useful to programmers.  However, there are limitations. This
+section will attempt to demonstrate one shortfall of first order polymorphism
+and then show how the problems can be solved with higher order polymorphism.
+Functors are introduced as an example of one of the concepts that cannot be
+expressed neatly with first order polymorphism.
+
+\subsubsection{Functors}
+A Functor is important concept in modern programming languages. Most languages
+have constructs that can be thought of as Functors, such as lists, optional types,
+trees, and other constructs that can be mapped over. Anything that acts as a
+container for another type and provides a function for mapping a function over
+that contained type is a Functor. They are an important concept because they
+provide a common interface to working with any type that acts as a box for
+another type. This means that programs can be written more generically and is
+more open to changes and modifications.
+
+Some languages seek to reify the general concept of functors so that aspects of
+a program can be checked for correctness at compile time. However, expressing
+Functors in a generic way requires a more expressive type system, specifically
+a type system that incorporates higher order polymorphism. Here is an example
+of an attempt to define a general Functor interface in Java:
+
+\begin{lstlisting}[caption=An attempt to define Functor in Java, language=Java, label={lst:javaFunctor}]
+interface Functor<A> {
+    Functor<B> map(Function<A, B> f);
+}
+\end{lstlisting}
+
+The code in Listing~\ref{lst:javaFunctor} has one main issue. The
+\lstinline{map} method defined here may return any type that implements
+\lstinline{Functor}, not the necessarily the same class as the one that the
+method has been called from. This means that there is no type-safe way of
+calling any method on the result of calling the \lstinline{map} function.
+
+In order to define a generic Functor interface, a way of referencing the type
+constructor that is being used as a functor is needed. In other worlds, the
+programming language needs type constructors that can be parametrized with
+other type constructors. Generics in Java provide a way of making types like
+\lstinline{Integer}, \lstinline{String}, and even \lstinline{List<Integer>}
+first class, but type constructors like \lstinline{List} must be applied to
+some concrete type before they can be abstracted over.
+
+\begin{lstlisting}[caption=Functor as defined in Haskell., language=Haskell, label={lst:haskellFunctor}]
+class Functor f where
+    fmap        :: (a -> b) -> f a -> f b
+\end{lstlisting}
+
+Listing~\ref{lst:haskellFunctor} shows how Functor can be defined in a Haskell,
+a language that does allow higher order polymorphism. Here, \lstinline{f} is a
+variable that references a type constructor. This class in Haskell specifies
+that anything that instanciates it must provide a single function,
+\lstinline{fmap}.  \lstinline{fmap} takes a function as a parameter that takes
+a value of type, \lstinline{a}, and returns a value of type \lstinline{b}. It
+then takes another argument of type \lstinline{f a}, or a type that the type
+constructor \lstinline{f} has been applied to. For example, it would take a
+value of type \lstinline{Maybe Int}, \lstinline{Maybe} being the type
+constructor \lstinline{f}. It would then return a value of type \lstinline{b},
+wrapped in the same type constructor \lstinline{Maybe}.
+
+The ability to use type constructors as first class in a programming language
+allows programs to be written in a more succinct, patterned, and generic manner.
+Examples like Functor show how a generic interface to work with constructs
+commonly found in software engineering can be achieved with the use of higher
+order polymorphism. 
+
+\subsubsection{Kinding}
+
+Higher order polymorphism can be thought of as the polymorphic lambda calculus
+`one level up', and as such the language at the level of types also needs to 
+have a system in place in order to prevent wrong expressions from being created.
+
+A system that allows for abstracting over type constructors needs some way
+of enforcing type constructors are not applied to types in a way that does not
+make sense, e.g.\ \lstinline{Integer Integer} does not make sense because the
+integer types does not take any type arguments in order to become a concrete
+type that can be inhabited by values. Alternately just \lstinline{List} cannot
+be instantiated with a value because it need one more type constructor, 
+the type that will be contained within that list.
+
+What is needed is essentially a type system for types. This is the notion of
+the kind of a type. Types can have the kind of $ * $, in which case
+they are concrete and can be inhabited by values, or they can have kind
+$ * \rightarrow * $, or a function from types to other types. Types like
+\lstinline{Integer} or \lstinline{List Integer} have kind $ * $ however
+type constructors like \lstinline{List} have kind 
+$ * \rightarrow * $ because they need to take one more concrete
+types before they can be used as a value. This system of kinding enforces that
+all types are well formed.
+
+\begin{figure}[H]\label{fig:kinds}
+    \centering
+    \begin{tabular}{l c p{3cm} r}
+        $ K $ & $ ::= $ & * &                   Concrete types \\
+      & $ | $ & $ K \rightarrow K $ &           Type functions from types to types \\
+    \end{tabular}
+    \caption{Syntax of Kinds}
+\end{figure}
+
+%%% unfuck this thing
+% 
+% \begin{figure}[h]\label{fig:kindexamples}
+%     \centering
+%     \begin{tikzpicture}[every node/.style={draw=none}]
+%         \node at (0, 0) (k){$ * $};
+%         \node at (13, 0) (k2k){$ * \rightarrow * $};
+%         \node at (17, 0) (k2k2k){$ * \rightarrow * \rightarrow * $};
+%         \node at (24, 0) (kk2k){$ (* \rightarrow *) \rightarrow * $};
+% 
+%         \node[below left=of k] (int) {\texttt{Int}};
+%         \node[below right=of int, xshift=-1cm] (listInt) {\texttt{List[Int]}};
+%         \node[above right=of listInt, xshift=-2cm] (pairInt) {\texttt{Pair[Int, Int]}};
+% 
+%         \node[below=of int, yshift=-2cm] (val) {\texttt{1}};
+%         \node[below right=of val, xshift=-2cm] (listVal) {\texttt{[1, 2, 3]}};
+%         \node[above right=of listVal, xshift=-2cm] (pairVal) {\texttt{(1, 2)}};
+% 
+%         \node (proper) [draw, fit= (k) (int) (listInt) (pairInt) (val) (listVal) (pairVal)] {};
+%         \node[yshift=3.0ex] at (proper.north) {\textit{Proper}};
+% 
+%         \draw[->] (val) -- (int);
+%         \draw[->] (listVal) -- (listInt);
+%         \draw[->] (pairVal) -- (pairInt);
+% 
+%         \draw[->] (int) -- (k);
+%         \draw[->] (listInt) -- (k);
+%         \draw[->] (pairInt) -- (k);
+% 
+%         %%% first order
+%         \node[below=of k2k] (list) {\texttt{List}};
+%         \node[below=of k2k2k] (pair) {\texttt{Pair}};
+% 
+%         \draw[->] (list) -- (k2k);
+%         \draw[->] (pair) -- (k2k2k);
+% 
+%         \node (first) [draw, fit= (k2k) (k2k2k) (list) (pair)] {};
+%         \node[yshift=3.0ex] at (first.north) {\textit{First Order}};
+% 
+%         %%% higher order
+%         \node[below=of kk2k] (functor) {\texttt{Functor}};
+% 
+%         \draw[->] (functor) -- (kk2k);
+% 
+%         \node (higher) [draw, fit= (functor) (kk2k)] {};
+%         \node[yshift=3.0ex] at (higher.north) {\textit{Higher Order}};
+% 
+%         \node[left=of k, xshift=-3cm] (kinds) {\textit{Kind}};
+%         \node[left=of int] (type) {\textit{Type}};
+%         \node[left=of val] (value) {\textit{Value}};
+%     \end{tikzpicture}
+%     \caption{Some types and their associated kinds.}
+% \end{figure}
+
+\section{Problems with Existing Memory Management Techniques}
+Most programming languages allow for dynamic memory management where the
+program can request portions of memory at run time and free that memory when it
+is no longer required. This operation can be performed manually as in the case
+of languages such as C or automatically in languages with a garbage collector
+such as Java.
+
+\subsection{Manual Memory Management: \lstinline{malloc} and \lstinline{free}}
+Some languages rely on manual instructions inserted by the programmer in order
+to allocate and deallocate regions of memory. Most implementations of the C
+programming language provide a group of library functions for this purpose,
+which include \lstinline{malloc} and \lstinline{free}. As mentioned, these
+constructs are insert manually by the programmer. This can lead to the issues
+described below.
+
+\subsubsection{Dangling References}\label{sec:dangle}
+Deallocating storage may lead to dangling references, where some reference 
+exists that points to memory that has been deallocated. This is nearly always
+unintentional, however it is an easy for a programmer to make this mistake when
+writing a program. Using the value of deallocated storage can lead to nefarious
+bugs and most languages consider using deallocated storage to
+be undefined behaviour.
+
+\lstinputlisting[
+    caption={A C program that leaves \texttt{p} pointing to deallocated 
+    memory.},
+    label={lst:cdangle}
+]{codeexamples/dangle.c}
+
+In the Rust programming language, references to values must live longer than
+the resource that they refer to~\cite{rust-borrowing}. The same program as the 
+C dangling pointer example (Listing~\ref{lst:cdangle}) written in Rust does not
+compile as it does not meet this restriction.
+
+\lstinputlisting[
+    caption={A Rust program that does not type check.}
+]{codeexamples/dangle.rs}
+
+\subsubsection{Memory Leaks}\label{sec:leak}
+Memory leaks occur when heap storage that is no longer usable is not
+deallocated. This can lead to software allocating more memory for itself and in
+the worst case can lead to a program consuming all available memory.
+
+\lstinputlisting[
+    caption={A C program which leaks memory.}
+]{codeexamples/leak.c}
+
+\subsection{Automatic Memory Management: Garbage Collection}
+Techniques have been invented in order to mitigate errors related to manual
+memory management. Garbage collection is one such method.  Garbage is a term
+for storage that has been allocated on the stack but is no longer reachable by
+the program, e.g.\ the storage is pointed to by a variable that has gone out of
+scope. Automatic garbage collection alleviates the programmer of explicitly
+managing memory. However there are several downsides to garbage collection. For
+example, the garbage collector will be invoked to collect unusable memory
+outside of the control of the programmer. When it is running it affects the
+execution of the program for an indeterminate amount of time. This hang is not
+acceptable in real--time systems.
+
+\section{A Solution in the Type System}
+Memory safety can still be achieved without the use of a garbage collectors.
+Program structure may be analysed during semantic checking and areas likely to
+cause issue can be identified. Here Rust's way of performing these checks is
+examined.
+
+\subsection{An Introduction to Rust's Model of Memory Management}
+Rust, a systems programming language~\cite{rust} is designed to provide memory
+safety with no runtime overhead. Rather than relying on a garbage collector to
+provide run-time memory safety, Rust relies on strong compile time checks.
+This system of compile time checks is referred to as \textit{ownership}, and is
+derived from affine type systems and unique pointers to memory
+locations\cite{rust-borrowing} \cite{levy2015ownership}.
+
+\subsubsection{Affine types}
+Affine types are a development of Linear type systems. Linear type systems
+ensure that every variable is used exactly once. In an affine type system, a
+variable may be used at most once, i.e.\ zero or one times. This has applications
+for managing resources in a program that do not persist the whole time that the
+program is running, e.g.\ file handles or heap allocated memory \cite{attapl}
+\cite{tovAffine}.
+
+\subsubsection{Ownership}\label{sec:regions}
+Values in Rust are bound to a single \textit{owner}, which is the variable to
+which it is bound. When the owning variable goes out of scope, the value is
+freed. For example:
+\begin{lstlisting}[nolol, label={lst:rustScope}]
+{
+    let x = 69;
+}
+\end{lstlisting}
+When \lstinline{x} goes out of scope the value associated with it will also be
+released from memory. Because there can only be a single owner associated with
+a value, aliasing a variable is not allowed. This prevents any two parts
+of a Rust program from accessing a section of heap memory at the same time.
+\begin{lstlisting}[nolol, label={lst:rustScope}]
+{
+    let x = Thing::new();
+    let y = x;
+    println("()", x);
+}
+\end{lstlisting}
+The above code does not compile because \lstinline{x} has been moved to
+\lstinline{y}, and there is an attempt to use \lstinline{x} in the print
+statement. Using a variable as a function argument will also make it not
+available for use again. If a function uses some value that has been passing in
+as a argument it must return that same value if the scope outside that
+function uses it.
+\begin{lstlisting}[nolol, label={lst:rustScope}]
+// value is comes from outside the scope of this function
+fn foo(value: Bar) -> Bar {
+    // do stuff with value, returning it and hence handing back ownership
+    value
+}
+\end{lstlisting}
+This is not practical, and gets even less practical once there are more
+arguments that must be passed back to the caller of the function. To this end
+Rust allows references to a value to be created. Creating a reference to a value
+in Rust is called borrowing. A reference to a value may be created and passed
+in to a function that uses it in some way, and that function does not need to
+thread the ownership of that variable back to the caller.
+\begin{lstlisting}[nolol, label={lst:rustScope}]
+// instead of passing value1 and value2 in by value, create references to values
+fn foo(value1: &Bar, value2: &Bar) -> u32 {
+    // do stuff with value1 and value2 and return the answer
+    123
+}
+\end{lstlisting}
+There are two kinds of borrows: immutable and mutable. There may be many
+immutable borrows of a resource at once or a single mutable borrow. This also
+prevents heap data from being accessed at the same time at different points in
+the program. The scope of borrow must always be shorter than that of the
+resource which it borrows. 
+
+This system where resources are freed after the single owner goes out of scope,
+as well as borrows always having shorter lifetimes than original resource
+mean that Rust can enforce the memory safety of programs. These concepts are
+built into the type system.
+
+\section{Representing Programs as Data Structures}
+talk about ASTs here
+
+\section{Type checking}
+talk about ast tree traversal
