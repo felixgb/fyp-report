@@ -378,6 +378,20 @@ returns the \textit{same} generic class, but parametrized with the result type
 same instance of Functor that it is called from.
 
 \section{Higher Kinded Types}
+define type constructors?
+
+In order to express concepts like the Functor described in Listing~\ref{lst:fakefunctor}
+higher order polymorphism is needed. This means that we need the ability to pass
+classes that themselves have type parameters, like \lstinline{List}, as type
+arguments in classes. Type constructors can be represented by type variables in
+the body of classes. This can be seen in the hypothetical Java functor example
+above, where the polymorphic type constructor is represented by the type variable
+\lstinline{F}. If Java allowed for type constructors to be represented as type
+variables then the Functor syntax above might be one way of representing this.
+
+Other generic concepts could be represented as well. Monads, a way of associating
+data types with specific computations, are well represented with higher order
+polymorphism. 
 
 %
 %\section{Higher Kinded Types}
