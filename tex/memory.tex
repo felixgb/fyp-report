@@ -1,222 +1,67 @@
-\chapter{Background and Motivation}\label{sec:motivation} 
-This chapter attempts to give some background for the topics covered in this
-project. Aspects from existing type systems are introduced and explained.
-Later an introduction to how programming lanagauges are represented as trees is
-given, as well as a how these trees can be traversed in order to build a type 
-checker. \Note{fix this sentence}
+\chapter{Memory Management}\label{sec:motivation} 
+Part of this project is designing a compile time system for memory management.
+Before describing how this system should work, an overview of existing memory
+management techniques is given. Most programming languages have the ability to
+dynamically allocate memory on the \textit{Heap}, which is a very useful
+language feature.  However, the allocation, dereferencing, and freeing of heap
+memory is problematic and this chapter will describe some of the issues with
+heap allocated memory.
 
-\section{Higher Kinded Types}
-This section introduces Higher Kinded Types, also known as higher order
-polymorphism, and demonstrates the expressive power of this concept though
-examples.
+\section{Memory Usage and Computational Effects}
+Most practical programming languages allow for storing and referencing areas
+in memory. When an expression is evaluated, it may have an effect on memory as
+well as returning a result. For example, an assignment statement in a programming
+does not have any obvious result, but instead operates on values in an area of
+memory that is accessible to other parts of the program. A langauge that allows
+for these sorts of computational effects is referred to as \textit{impure} and
+one of the goals for this project is to make these features safer to use.
 
-\subsection{Parametric Polymorphism}\label{sec:generics}
-First order parametric polymorphism, known as Generics in Java, are types that
-are parametrized over some other type. This kind of polymorphism allows for the
-definition and use of functions that behave uniformly over all types.  They can
-be used to write code that can be checked for safety at compile time. For
-example, without generics, a list could be used like:
+\subsection{Stack and Heap Memory}
+There are usually two kinds of memory that may be used to store values: stack
+memory and heap memory. Both of these kinds of memory are refered to 
 
-\begin{lstlisting}[caption=Runtime error that could be avoided, language=Java, label={lst:javaerr}]
-List l = new ArrayList();
-l.add("This is a string");
-Integer i = (Integer) l.get(0); // Run time error here
-\end{lstlisting}
+The basic operations needed in a system with memory allocation are:
+\begin{description}
+    \item[Allocation]
+        Allocation refers to creating an area in memory to store the result of
+        an expression. This is commonly seen is the form of variable
+        assignment, for example \lstinline{x := ref 2 + 3;}. Here the expression
+        \lstinline{2 + 3} is evaluated~\footnote{In languages with \textit{strict}
+        evaluation, the expression is evaluated before the result is bound to
+        the variable. This is not the case in all programming languages.} and
+        the result is stored in the area of memory referred to by the variable
+        \lstinline{x}. The value referred to by \lstinline{x} can then be used
+        at some later point in the program. Variables may also be
+        reassigned, for example \lstinline{y := x}. \lstinline{y} would then
+        point to the same location that \lstinline{x} points to.
+    \item[Dereference]
+        Once an area of memory has been allocated, and is pointed to by a
+        variable, some way of using the expression stored at that location is
+        needed. Dereferencing refers to getting the expression stored at a
+        location in memory. If we wanted to use \lstinline{x} at some point
+        after the expression \lstinline{x := ref 2 + 3} had been evaluated,
+        we could write \lstinline{!x}. The result of that expression would be
+        5, because \lstinline{2 + 3} has been evaluated and the result stored
+        in the area of memory that is pointed to by \lstinline{x}. The
+        dereference operator, \lstinline{!E}, means ``go to the location in memory,
+        \lstinline{E}, and get the value stored there''. 
+    \item[Deallocation]
+        Deallocation refers to freeing memory once it no longer needed. It is
+        common to not want to use memory for the whole lifetime of a program.
+        If memory was never freed programs would use far more memory than they
+        needed, which would not be practical. In order to solve this problem
+        memory may be deallocated once a variable goes out of scope, which is
+        common for stack memory, or we could introduce an explicit deallocate
+        operator, called \lstinline{free}. This operator would take a memory
+        location and mark that location as unused so that a future allocation
+        could reuse the same space.
+\end{description}
+most programming languages.  Expressions may be evaluated and stored in memory
+for use at a later point. This operation is called allocation,  The variable may then be used in another expression
+at a later point. Specifically, the \textit{heap} refers to an area
+of memory that is set aside for dynamic allocation. Usually areas of memory
+stored here can be allocated, dereferencd, and freed at any point in a program.
 
-This is problematic because a list in Java can contain any type of object, but
-methods that the \lstinline{List} object provides must know about the type of
-object that the list contains. If those methods do not have a way of knowing
-what kind of object a list contains then calling the methods will not be type
-safe, as demonstrated in Listing~\ref{lst:javaerr}. The same code written with
-Java's Generics will produce a compile time error:
-
-\begin{lstlisting}[caption=Compile time error, language=Java, label={lst:generr}]
-List<String> l = new ArrayList<String>(); // Now the list has been parametrized with a type
-l.add("This is a string");
-Integer i = l.get(0);                     // Compile time error here.
-\end{lstlisting}
-
-Compile time errors are much more desirable then runtime errors because they
-can be caught and fixed predictably, unlike runtime errors.  The code in
-Listing~\ref{lst:generr} parametrizes the \lstinline{List} type with the
-\lstinline{String} type, and hence the last line produces a compile time error
-as the list's \lstinline{get} method returns a \lstinline{String}. 
-
-\subsubsection{Type Constructors}
-A type constructor is a feature of programming languages that builds new types
-from old ones. In Java, an example would be the \lstinline{List} type. The
-\lstinline{List} type cannot be used to describe some value in Java; all values
-must be a \lstinline{List} \textit{of} something, for example a
-\lstinline{List<String>}.  In other words, \lstinline{List} is a type
-constructor that must be parametrized with some base type like
-\lstinline{Integer}, \lstinline{String}, or even \lstinline{List<String>}. Once
-it has been applied to some base type, it becomes a new type;
-\lstinline{List<Integer>}, \lstinline{List<String>}, and
-\lstinline{List<List<String>>} are all separate types.
-
-Parametric polymorphism is an important addition to statically typed
-programming languages. First order polymorphism is modelled by a typed lambda
-calculus called System F, which is introduced in Section~\ref{sec:systemF}.
-However, Generics in Java and in lots of other programming languages leave
-something to be desired.  There are higher level, general, generic programming
-concepts that cannot be expressed with first order polymorphism. Generally,
-these systems are constrained in that type constructors may only be
-parametrized by concrete types, and not other type constructors. Higher order
-polymorphism is needed in order to neatly express some programming concepts.
-
-\subsection{Higher Order Polymorphism}
-As mentioned in Section~\ref{sec:generics}, first order parametric polymorphism
-can be very useful to programmers.  However, there are limitations. This
-section will attempt to demonstrate one shortfall of first order polymorphism
-and then show how the problems can be solved with higher order polymorphism.
-Functors are introduced as an example of one of the concepts that cannot be
-expressed neatly with first order polymorphism.
-
-\subsubsection{Functors}
-A Functor is important concept in modern programming languages. Most languages
-have constructs that can be thought of as Functors, such as lists, optional types,
-trees, and other constructs that can be mapped over. Anything that acts as a
-container for another type and provides a function for mapping a function over
-that contained type is a Functor. They are an important concept because they
-provide a common interface to working with any type that acts as a box for
-another type. This means that programs can be written more generically and is
-more open to changes and modifications.
-
-Some languages seek to reify the general concept of functors so that aspects of
-a program can be checked for correctness at compile time. However, expressing
-Functors in a generic way requires a more expressive type system, specifically
-a type system that incorporates higher order polymorphism. Here is an example
-of an attempt to define a general Functor interface in Java:
-
-\begin{lstlisting}[caption=An attempt to define Functor in Java, language=Java, label={lst:javaFunctor}]
-interface Functor<A> {
-    Functor<B> map(Function<A, B> f);
-}
-\end{lstlisting}
-
-The code in Listing~\ref{lst:javaFunctor} has one main issue. The
-\lstinline{map} method defined here may return any type that implements
-\lstinline{Functor}, not the necessarily the same class as the one that the
-method has been called from. This means that there is no type-safe way of
-calling any method on the result of calling the \lstinline{map} function.
-
-In order to define a generic Functor interface, a way of referencing the type
-constructor that is being used as a functor is needed. In other worlds, the
-programming language needs type constructors that can be parametrized with
-other type constructors. Generics in Java provide a way of making types like
-\lstinline{Integer}, \lstinline{String}, and even \lstinline{List<Integer>}
-first class, but type constructors like \lstinline{List} must be applied to
-some concrete type before they can be abstracted over.
-
-\begin{lstlisting}[caption=Functor as defined in Haskell., language=Haskell, label={lst:haskellFunctor}]
-class Functor f where
-    fmap        :: (a -> b) -> f a -> f b
-\end{lstlisting}
-
-Listing~\ref{lst:haskellFunctor} shows how Functor can be defined in a Haskell,
-a language that does allow higher order polymorphism. Here, \lstinline{f} is a
-variable that references a type constructor. This class in Haskell specifies
-that anything that instanciates it must provide a single function,
-\lstinline{fmap}.  \lstinline{fmap} takes a function as a parameter that takes
-a value of type, \lstinline{a}, and returns a value of type \lstinline{b}. It
-then takes another argument of type \lstinline{f a}, or a type that the type
-constructor \lstinline{f} has been applied to. For example, it would take a
-value of type \lstinline{Maybe Int}, \lstinline{Maybe} being the type
-constructor \lstinline{f}. It would then return a value of type \lstinline{b},
-wrapped in the same type constructor \lstinline{Maybe}.
-
-The ability to use type constructors as first class in a programming language
-allows programs to be written in a more succinct, patterned, and generic manner.
-Examples like Functor show how a generic interface to work with constructs
-commonly found in software engineering can be achieved with the use of higher
-order polymorphism. 
-
-\subsubsection{Kinding}
-
-Higher order polymorphism can be thought of as the polymorphic lambda calculus
-`one level up', and as such the language at the level of types also needs to 
-have a system in place in order to prevent wrong expressions from being created.
-
-A system that allows for abstracting over type constructors needs some way
-of enforcing type constructors are not applied to types in a way that does not
-make sense, e.g.\ \lstinline{Integer Integer} does not make sense because the
-integer types does not take any type arguments in order to become a concrete
-type that can be inhabited by values. Alternately just \lstinline{List} cannot
-be instantiated with a value because it need one more type constructor, 
-the type that will be contained within that list.
-
-What is needed is essentially a type system for types. This is the notion of
-the kind of a type. Types can have the kind of $ * $, in which case
-they are concrete and can be inhabited by values, or they can have kind
-$ * \rightarrow * $, or a function from types to other types. Types like
-\lstinline{Integer} or \lstinline{List Integer} have kind $ * $ however
-type constructors like \lstinline{List} have kind 
-$ * \rightarrow * $ because they need to take one more concrete
-types before they can be used as a value. This system of kinding enforces that
-all types are well formed.
-
-\begin{figure}[H]\label{fig:kinds}
-    \centering
-    \begin{tabular}{l c p{3cm} r}
-        $ K $ & $ ::= $ & * &                   Concrete types \\
-      & $ | $ & $ K \rightarrow K $ &           Type functions from types to types \\
-    \end{tabular}
-    \caption{Syntax of Kinds}
-\end{figure}
-
-%%% unfuck this thing
-% 
-% \begin{figure}[h]\label{fig:kindexamples}
-%     \centering
-%     \begin{tikzpicture}[every node/.style={draw=none}]
-%         \node at (0, 0) (k){$ * $};
-%         \node at (13, 0) (k2k){$ * \rightarrow * $};
-%         \node at (17, 0) (k2k2k){$ * \rightarrow * \rightarrow * $};
-%         \node at (24, 0) (kk2k){$ (* \rightarrow *) \rightarrow * $};
-% 
-%         \node[below left=of k] (int) {\texttt{Int}};
-%         \node[below right=of int, xshift=-1cm] (listInt) {\texttt{List[Int]}};
-%         \node[above right=of listInt, xshift=-2cm] (pairInt) {\texttt{Pair[Int, Int]}};
-% 
-%         \node[below=of int, yshift=-2cm] (val) {\texttt{1}};
-%         \node[below right=of val, xshift=-2cm] (listVal) {\texttt{[1, 2, 3]}};
-%         \node[above right=of listVal, xshift=-2cm] (pairVal) {\texttt{(1, 2)}};
-% 
-%         \node (proper) [draw, fit= (k) (int) (listInt) (pairInt) (val) (listVal) (pairVal)] {};
-%         \node[yshift=3.0ex] at (proper.north) {\textit{Proper}};
-% 
-%         \draw[->] (val) -- (int);
-%         \draw[->] (listVal) -- (listInt);
-%         \draw[->] (pairVal) -- (pairInt);
-% 
-%         \draw[->] (int) -- (k);
-%         \draw[->] (listInt) -- (k);
-%         \draw[->] (pairInt) -- (k);
-% 
-%         %%% first order
-%         \node[below=of k2k] (list) {\texttt{List}};
-%         \node[below=of k2k2k] (pair) {\texttt{Pair}};
-% 
-%         \draw[->] (list) -- (k2k);
-%         \draw[->] (pair) -- (k2k2k);
-% 
-%         \node (first) [draw, fit= (k2k) (k2k2k) (list) (pair)] {};
-%         \node[yshift=3.0ex] at (first.north) {\textit{First Order}};
-% 
-%         %%% higher order
-%         \node[below=of kk2k] (functor) {\texttt{Functor}};
-% 
-%         \draw[->] (functor) -- (kk2k);
-% 
-%         \node (higher) [draw, fit= (functor) (kk2k)] {};
-%         \node[yshift=3.0ex] at (higher.north) {\textit{Higher Order}};
-% 
-%         \node[left=of k, xshift=-3cm] (kinds) {\textit{Kind}};
-%         \node[left=of int] (type) {\textit{Type}};
-%         \node[left=of val] (value) {\textit{Value}};
-%     \end{tikzpicture}
-%     \caption{Some types and their associated kinds.}
-% \end{figure}
 
 \section{Problems with Existing Memory Management Techniques}
 Most programming languages allow for dynamic memory management where the
