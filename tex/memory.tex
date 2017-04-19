@@ -12,38 +12,47 @@ Most practical programming languages allow for storing and referencing areas
 in memory. When an expression is evaluated, it may have an effect on memory as
 well as returning a result. For example, an assignment statement in a programming
 does not have any obvious result, but instead operates on values in an area of
-memory that is accessible to other parts of the program. A langauge that allows
+memory that is accessible to other parts of the program. A language that allows
 for these sorts of computational effects is referred to as \textit{impure} and
 one of the goals for this project is to make these features safer to use.
 
 \subsection{Stack and Heap Memory}
 There are usually two kinds of memory that may be used to store values: stack
-memory and heap memory. Both of these kinds of memory are refered to 
+memory and heap memory. Stack memory is commonly used to store values for
+function calls. A function is called with parameters referred to by variables,
+which are in scope for the duration of the function call. These local variables
+hold the result of evaluating some expression, which is typically stored in
+stack memory. This has the advantage that memory is very predictably allocated
+and deallocated. However heap memory is sometimes needed when multiple functions
+need to refer to or mutate the same value; such as is the case with global
+variables. These values live longer than any individual scope and therefore
+it does not make sense to store them on the stack.
 
 The basic operations needed in a system with memory allocation are:
 \begin{description}
     \item[Allocation]
         Allocation refers to creating an area in memory to store the result of
         an expression. This is commonly seen is the form of variable
-        assignment, for example \lstinline{x := ref 2 + 3;}. Here the expression
-        \lstinline{2 + 3} is evaluated~\footnote{In languages with \textit{strict}
-        evaluation, the expression is evaluated before the result is bound to
-        the variable. This is not the case in all programming languages.} and
-        the result is stored in the area of memory referred to by the variable
-        \lstinline{x}. The value referred to by \lstinline{x} can then be used
-        at some later point in the program. Variables may also be
-        reassigned, for example \lstinline{y := x}. \lstinline{y} would then
-        point to the same location that \lstinline{x} points to.
+        assignment, for example \lstinline{x := ref 2 + 3;}. Here the
+        expression \lstinline{2 + 3} is evaluated~\footnote{In languages with
+        \textit{strict} evaluation, the expression is evaluated before the
+        result is bound to the variable. This is not the case in all
+        programming languages.} and the result is stored in the area of memory
+        referred to by the variable \lstinline{x}. The value referred to by
+        \lstinline{x} can then be used at some later point in the program.
+        Variables may also be reassigned, for example \lstinline{y := x}.
+        \lstinline{y} would then point to the same location that \lstinline{x}
+        points to.
     \item[Dereference]
         Once an area of memory has been allocated, and is pointed to by a
         variable, some way of using the expression stored at that location is
         needed. Dereferencing refers to getting the expression stored at a
         location in memory. If we wanted to use \lstinline{x} at some point
-        after the expression \lstinline{x := ref 2 + 3} had been evaluated,
-        we could write \lstinline{!x}. The result of that expression would be
-        5, because \lstinline{2 + 3} has been evaluated and the result stored
-        in the area of memory that is pointed to by \lstinline{x}. The
-        dereference operator, \lstinline{!E}, means ``go to the location in memory,
+        after the expression \lstinline{x := ref 2 + 3} had been evaluated, we
+        could write \lstinline{!x}. The result of that expression would be 5,
+        because \lstinline{2 + 3} has been evaluated and the result stored in
+        the area of memory that is pointed to by \lstinline{x}. The dereference
+        operator, \lstinline{!E}, means ``go to the location in memory,
         \lstinline{E}, and get the value stored there''. 
     \item[Deallocation]
         Deallocation refers to freeing memory once it no longer needed. It is
@@ -56,6 +65,15 @@ The basic operations needed in a system with memory allocation are:
         location and mark that location as unused so that a future allocation
         could reuse the same space.
 \end{description}
+
+Garbage collection is one way  of mitigating the problems induced by manual
+memory management. Memory is automatically deallocated at run time, and the
+programmer does not have to manually free memory. The freed memory can then be
+reused in the program. Lots of modern languages rely on garbage collectors to 
+manage dynamically allocated memory, but use of a garbage collector is not
+without cost. 
+[
+
 most programming languages.  Expressions may be evaluated and stored in memory
 for use at a later point. This operation is called allocation,  The variable may then be used in another expression
 at a later point. Specifically, the \textit{heap} refers to an area
