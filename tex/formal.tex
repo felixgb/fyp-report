@@ -10,9 +10,21 @@ project.
 \section{Lambda Calculus}\label{sec:lambdacalc}
 The lambda calculus is model of computation where the only behaviour is
 function definition and application. It is commonly used to specify programming
-language features and to formalize their behaviour. Specifically, it is used to
+language features and to formalize their behaviour.
+The reasons for useing the lambda calculus to specify programming behaviour are:
+\begin{itemize}
+    \item It is a very simple language, with very few constructs to reason about.
+        This makes it very easy to implement an interpreter for, and very easy
+        to implement type systems for.
+    \item It is sufficiently powerful to express all computable functions.
+        although it is extremely simple, it is a universal model of computation.
+\end{itemize}
+The lambda calculus can be view as a  miniature programming language or as a
+system for modelling abstract behaviour. 
 reason about type systems. The lambda calculus can be viewed as a miniature
 programming language and a system where strict properties can be proved.
+
+
 
 \begin{figure}[H]\label{fig:lambdaCalc}
     \begin{tabular}{l c p{3cm} r}

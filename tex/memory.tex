@@ -19,17 +19,26 @@ one of the goals for this project is to make these features safer to use.
 \subsection{Stack and Heap Memory}
 There are usually two kinds of memory that may be used to store values: stack
 memory and heap memory. Stack memory is commonly used to store values for
-function calls. A function is called with parameters referred to by variables,
+function calls~\cite{appel}. A function is called with parameters referred to by variables,
 which are in scope for the duration of the function call. These local variables
 hold the result of evaluating some expression, which is typically stored in
 stack memory. This has the advantage that memory is very predictably allocated
-and deallocated. However heap memory is sometimes needed when multiple functions
+and deallocated, and this operation of allocating and deallocating can be
+accomplished very quickly. 
+
+However, dynamic memory allocation is sometimes needed when multiple functions
 need to refer to or mutate the same value; such as is the case with global
-variables. These values live longer than any individual scope and therefore
-it does not make sense to store them on the stack.
+variables. Typically dynamic memory allocation refers to memory management on 
+the heap.
+
+These values live longer than any individual scope and therefore
+it does not make sense to store them on the stack. Generally, heap memory is
+used when some value needs to be alive for a longer than a single function's
+execution. However this memory cannot be predictably allocated and deallocated.
+Programming languages have several strategies for managing heap memory.
 
 The basic operations needed in a system with memory allocation are:
-\begin{description}
+\begin{description}[style=nextline]
     \item[Allocation]
         Allocation refers to creating an area in memory to store the result of
         an expression. This is commonly seen is the form of variable
@@ -66,37 +75,16 @@ The basic operations needed in a system with memory allocation are:
         could reuse the same space.
 \end{description}
 
-Garbage collection is one way  of mitigating the problems induced by manual
-memory management. Memory is automatically deallocated at run time, and the
-programmer does not have to manually free memory. The freed memory can then be
-reused in the program. Lots of modern languages rely on garbage collectors to 
-manage dynamically allocated memory, but use of a garbage collector is not
-without cost. 
-[
+\section{Problems with Dynamic Memory Allocation}\label{sec:problems}
+Although dynamic memory allocation is a very useful language feature it is also
+a notorious source of bugs. Compared to stack memory allocation, there is no
+enforced regular pattern of allocation and deallocation. Either the programmer
+must explicitly state when to allocated and deallocate memory, or an automatic
+system is used to management memory, called a garbage collector. If heap memory
+is manually managed, such as is the case in languages like C, there are some
+common bugs, which are described in this section.
 
-most programming languages.  Expressions may be evaluated and stored in memory
-for use at a later point. This operation is called allocation,  The variable may then be used in another expression
-at a later point. Specifically, the \textit{heap} refers to an area
-of memory that is set aside for dynamic allocation. Usually areas of memory
-stored here can be allocated, dereferencd, and freed at any point in a program.
-
-
-\section{Problems with Existing Memory Management Techniques}
-Most programming languages allow for dynamic memory management where the
-program can request portions of memory at run time and free that memory when it
-is no longer required. This operation can be performed manually as in the case
-of languages such as C or automatically in languages with a garbage collector
-such as Java.
-
-\subsection{Manual Memory Management: \lstinline{malloc} and \lstinline{free}}
-Some languages rely on manual instructions inserted by the programmer in order
-to allocate and deallocate regions of memory. Most implementations of the C
-programming language provide a group of library functions for this purpose,
-which include \lstinline{malloc} and \lstinline{free}. As mentioned, these
-constructs are insert manually by the programmer. This can lead to the issues
-described below.
-
-\subsubsection{Dangling References}\label{sec:dangle}
+\subsection{Dangling References}\label{sec:dangle}
 Deallocating storage may lead to dangling references, where some reference 
 exists that points to memory that has been deallocated. This is nearly always
 unintentional, however it is an easy for a programmer to make this mistake when
@@ -107,120 +95,238 @@ be undefined behaviour.
 \lstinputlisting[
     caption={A C program that leaves \texttt{p} pointing to deallocated 
     memory.},
+    language=C,
     label={lst:cdangle}
 ]{codeexamples/dangle.c}
 
-In the Rust programming language, references to values must live longer than
-the resource that they refer to~\cite{rust-borrowing}. The same program as the 
-C dangling pointer example (Listing~\ref{lst:cdangle}) written in Rust does not
-compile as it does not meet this restriction.
+In this example the function \lstinline{dangle()} returns the address of variable
+that is deallocated when the function terminates. This means that part of the
+program that attempts to use the value returned by \lstinline{dangle()} will
+result in result in undefined behaviour.
 
-\lstinputlisting[
-    caption={A Rust program that does not type check.}
-]{codeexamples/dangle.rs}
-
-\subsubsection{Memory Leaks}\label{sec:leak}
+\subsection{Memory Leaks}\label{sec:leak}
 Memory leaks occur when heap storage that is no longer usable is not
 deallocated. This can lead to software allocating more memory for itself and in
 the worst case can lead to a program consuming all available memory.
 
 \lstinputlisting[
-    caption={A C program which leaks memory.}
+    caption={A C program which leaks memory.},
+    language=C
 ]{codeexamples/leak.c}
 
-\subsection{Automatic Memory Management: Garbage Collection}
-Techniques have been invented in order to mitigate errors related to manual
-memory management. Garbage collection is one such method.  Garbage is a term
-for storage that has been allocated on the stack but is no longer reachable by
-the program, e.g.\ the storage is pointed to by a variable that has gone out of
-scope. Automatic garbage collection alleviates the programmer of explicitly
-managing memory. However there are several downsides to garbage collection. For
-example, the garbage collector will be invoked to collect unusable memory
-outside of the control of the programmer. When it is running it affects the
-execution of the program for an indeterminate amount of time. This hang is not
-acceptable in real--time systems.
+In this C program memory is allocated in the function \lstinline{allocate()}.
+The C library function \lstinline{malloc(size_t size)} allocates \lstinline{size}
+bytes on the heap and returns a pointer that area. However, in this example,
+the pointer that is returned, bound to the variable \lstinline{a}, is not used
+and never returned. Therefore the memory has been allocated on the heap but
+there is no way of referencing it once the function \lstinline{allocate()} goes
+out of scope. If the function were used in a loop, heap memory would very quickly
+be used up pointlessly! 
 
-\section{A Solution in the Type System}
-Memory safety can still be achieved without the use of a garbage collectors.
-Program structure may be analysed during semantic checking and areas likely to
-cause issue can be identified. Here Rust's way of performing these checks is
-examined.
+\subsection{Double Free}\label{sec:doublefree}
+Once a programmer no longer needs some dynamically allocated memory they should
+deallocate it so the memory space is not wasted. This is can be accomplished by
+calling a provided library function, such as C's \lstinline{free(void *ptr)}.
+This function takes an address of some space in heap memory as a parameter and
+makes it allocatable again. However, if the same address in memory were to be
+freed twice, then some other object that may now reside in that space may be
+prematurely destroyed. For example:
 
-\subsection{An Introduction to Rust's Model of Memory Management}
-Rust, a systems programming language~\cite{rust} is designed to provide memory
-safety with no runtime overhead. Rather than relying on a garbage collector to
-provide run-time memory safety, Rust relies on strong compile time checks.
-This system of compile time checks is referred to as \textit{ownership}, and is
-derived from affine type systems and unique pointers to memory
-locations\cite{rust-borrowing} \cite{levy2015ownership}.
+\lstinputlisting[
+    caption={Mistakenly freeing the same memory more than once.},
+    language=C
+]{codeexamples/doublefree.c}
 
-\subsubsection{Affine types}
-Affine types are a development of Linear type systems. Linear type systems
-ensure that every variable is used exactly once. In an affine type system, a
-variable may be used at most once, i.e.\ zero or one times. This has applications
-for managing resources in a program that do not persist the whole time that the
-program is running, e.g.\ file handles or heap allocated memory \cite{attapl}
-\cite{tovAffine}.
+In this example space is allocated which is pointed to by \lstinline{p}. Once
+this storage is free, space is allocated for \lstinline{q}. The space allocated
+for \lstinline{q} might be the same space that was originally allocated for \lstinline{p}.
+When \lstinline{p} is freed again, \lstinline{q} might be accidentally destroyed.
+Any future attempt to use \lstinline{q} again after this would result in undefined
+behaviour.
 
-\subsubsection{Ownership}\label{sec:regions}
-Values in Rust are bound to a single \textit{owner}, which is the variable to
-which it is bound. When the owning variable goes out of scope, the value is
-freed. For example:
-\begin{lstlisting}[nolol, label={lst:rustScope}]
-{
-    let x = 69;
-}
-\end{lstlisting}
-When \lstinline{x} goes out of scope the value associated with it will also be
-released from memory. Because there can only be a single owner associated with
-a value, aliasing a variable is not allowed. This prevents any two parts
-of a Rust program from accessing a section of heap memory at the same time.
-\begin{lstlisting}[nolol, label={lst:rustScope}]
-{
-    let x = Thing::new();
-    let y = x;
-    println("()", x);
-}
-\end{lstlisting}
-The above code does not compile because \lstinline{x} has been moved to
-\lstinline{y}, and there is an attempt to use \lstinline{x} in the print
-statement. Using a variable as a function argument will also make it not
-available for use again. If a function uses some value that has been passing in
-as a argument it must return that same value if the scope outside that
-function uses it.
-\begin{lstlisting}[nolol, label={lst:rustScope}]
-// value is comes from outside the scope of this function
-fn foo(value: Bar) -> Bar {
-    // do stuff with value, returning it and hence handing back ownership
-    value
-}
-\end{lstlisting}
-This is not practical, and gets even less practical once there are more
-arguments that must be passed back to the caller of the function. To this end
-Rust allows references to a value to be created. Creating a reference to a value
-in Rust is called borrowing. A reference to a value may be created and passed
-in to a function that uses it in some way, and that function does not need to
-thread the ownership of that variable back to the caller.
-\begin{lstlisting}[nolol, label={lst:rustScope}]
-// instead of passing value1 and value2 in by value, create references to values
-fn foo(value1: &Bar, value2: &Bar) -> u32 {
-    // do stuff with value1 and value2 and return the answer
-    123
-}
-\end{lstlisting}
-There are two kinds of borrows: immutable and mutable. There may be many
-immutable borrows of a resource at once or a single mutable borrow. This also
-prevents heap data from being accessed at the same time at different points in
-the program. The scope of borrow must always be shorter than that of the
-resource which it borrows. 
+\section{Potential Solutions}
+Several design patterns and technologies have been developed for tackling the
+dynamic memory management issues described in Section~\ref{sec:problems}.
+This section attempts to describe some of these techniques, while noting why
+they may not an ideal solution.
 
-This system where resources are freed after the single owner goes out of scope,
-as well as borrows always having shorter lifetimes than original resource
-mean that Rust can enforce the memory safety of programs. These concepts are
-built into the type system.
+\subsection{Garbage Collection}
+Garbage refers to heap allocated storage that is no longer reachable by the
+programmer. This memory can no longer be used and should be deallocated. It is
+important to note that garbage collection is not performed by the compiler, but
+by a runtime system~\cite{appel}. Languages with garbage collection do not have
+manual deallocation of memory, but instead rely on a system that attempts to
+track when objects are no longer reachable.  The programmer therefore does not
+have to manually annotate the program and tell the compiler when to release
+memory, i.e.\ constructs like C's \lstinline{free} are not needed. Garbage
+collection effectively solves problems related dangling pointers, double free
+bugs, and certain kinds of memory leak.
 
-\section{Representing Programs as Data Structures}
-talk about ASTs here
+Many modern language rely on garbage collection for memory management. Because
+of improvements in safety and ease of use Java, Python, Scala, Haskell, and
+many others all rely on garbage collection. This has a notable effect on
+programmer efficiency~\cite{garbage}. However, use of a garbage collector does
+not come without cost. Some issues are:
 
-\section{Type checking}
-talk about ast tree traversal
+\begin{itemize}
+    \item
+        A programmer can have some insight as to where objects should be freed
+        in a program and may know how long an object should exist for. The
+        garbage collector may not be able to make this insight. As a result a
+        program written in a garbage collected language can use far more memory
+        than than a program in a language with manual memory management written
+        by an expert.
+    \item
+        Significant computational overhead is needed in a program because
+        garbage collectors must always account for the worst case scenario.
+        Because they need to be running at the same time as the program that
+        they manage they can significantly decrease performance~\cite{garbage}.
+        In lots of applications the speed of execution does not matter, but for
+        certain types of applications the detriment to performance is
+        unacceptable.
+    \item
+        Program execution may be interrupted in order to collected unused
+        memory. The programmer cannot predict when these pauses may happen.
+        Certain types of real-time or interactive applications should not be
+        interrupted, so cannot be programmed in garbage collected languages.
+\end{itemize}
+
+Because of these issues, use of a garbage collected language is not always the
+correct decision.
+
+\subsection{Resource Acquisition is Initialization}
+Resource Acquisition Is Initialization, or RAII, is a technique, not a
+technology, which connects the lifetime of a resource, such as heap memory, to
+the lifetime of an object~\cite{cppref}. It is a way of managing dynamically
+allocated memory in languages with object oriented features.
+
+\subsubsection{Lifetimes}
+The lifetime of an object or resource refers to the length of time from when an
+object is initialized to when it is deallocated. It is used in object oriented
+programming to refer to the length of time that between an object's creation
+and destruction. 
+
+Lifetimes can be used for resource management, which is the essence of of the
+RAII idiom. Resources are allocated when an object is created, and deallocated
+when an object is destructed. An object's lifetime may be tied to it's
+enclosing scope, and in this way resources may be freed when an object goes out
+of scope.  In this manner resources will always be deallocated when an object
+goes out of scope, effectively solving dangling issues related to dangling
+pointers~\cite{rust}.
+
+
+%Memory safety can still be achieved without the use of a garbage collectors.
+%Program structure may be analysed during semantic checking and areas likely to
+%cause issue can be identified. Here Rust's way of performing these checks is
+%examined.
+
+%
+%most programming languages.  Expressions may be evaluated and stored in memory
+%for use at a later point. This operation is called allocation,  The variable may then be used in another expression
+%at a later point. Specifically, the \textit{heap} refers to an area
+%of memory that is set aside for dynamic allocation. Usually areas of memory
+%stored here can be allocated, dereferencd, and freed at any point in a program.
+%
+%
+%\section{Problems with Existing Memory Management Techniques}
+%Most programming languages allow for dynamic memory management where the
+%program can request portions of memory at run time and free that memory when it
+%is no longer required. This operation can be performed manually as in the case
+%of languages such as C or automatically in languages with a garbage collector
+%such as Java.
+%
+%\subsection{Manual Memory Management: \lstinline{malloc} and \lstinline{free}}
+%Some languages rely on manual instructions inserted by the programmer in order
+%to allocate and deallocate regions of memory. Most implementations of the C
+%programming language provide a group of library functions for this purpose,
+%which include \lstinline{malloc} and \lstinline{free}. As mentioned, these
+%constructs are insert manually by the programmer. This can lead to the issues
+%described below.
+%
+%In the Rust programming language, references to values must live longer than
+%the resource that they refer to~\cite{rust-borrowing}. The same program as the 
+%C dangling pointer example (Listing~\ref{lst:cdangle}) written in Rust does not
+%compile as it does not meet this restriction.
+%
+%\lstinputlisting[
+%    caption={A Rust program that does not type check.}
+%]{codeexamples/dangle.rs}
+%
+%\subsection{An Introduction to Rust's Model of Memory Management}
+%Rust, a systems programming language~\cite{rust} is designed to provide memory
+%safety with no runtime overhead. Rather than relying on a garbage collector to
+%provide run-time memory safety, Rust relies on strong compile time checks.
+%This system of compile time checks is referred to as \textit{ownership}, and is
+%derived from affine type systems and unique pointers to memory
+%locations\cite{rust-borrowing} \cite{levy2015ownership}.
+%
+%\subsubsection{Affine types}
+%Affine types are a development of Linear type systems. Linear type systems
+%ensure that every variable is used exactly once. In an affine type system, a
+%variable may be used at most once, i.e.\ zero or one times. This has applications
+%for managing resources in a program that do not persist the whole time that the
+%program is running, e.g.\ file handles or heap allocated memory \cite{attapl}
+%\cite{tovAffine}.
+%
+%\subsubsection{Ownership}\label{sec:regions}
+%Values in Rust are bound to a single \textit{owner}, which is the variable to
+%which it is bound. When the owning variable goes out of scope, the value is
+%freed. For example:
+%\begin{lstlisting}[nolol, label={lst:rustScope}]
+%{
+%    let x = 69;
+%}
+%\end{lstlisting}
+%When \lstinline{x} goes out of scope the value associated with it will also be
+%released from memory. Because there can only be a single owner associated with
+%a value, aliasing a variable is not allowed. This prevents any two parts
+%of a Rust program from accessing a section of heap memory at the same time.
+%\begin{lstlisting}[nolol, label={lst:rustScope}]
+%{
+%    let x = Thing::new();
+%    let y = x;
+%    println("()", x);
+%}
+%\end{lstlisting}
+%The above code does not compile because \lstinline{x} has been moved to
+%\lstinline{y}, and there is an attempt to use \lstinline{x} in the print
+%statement. Using a variable as a function argument will also make it not
+%available for use again. If a function uses some value that has been passing in
+%as a argument it must return that same value if the scope outside that
+%function uses it.
+%\begin{lstlisting}[nolol, label={lst:rustScope}]
+%// value is comes from outside the scope of this function
+%fn foo(value: Bar) -> Bar {
+%    // do stuff with value, returning it and hence handing back ownership
+%    value
+%}
+%\end{lstlisting}
+%This is not practical, and gets even less practical once there are more
+%arguments that must be passed back to the caller of the function. To this end
+%Rust allows references to a value to be created. Creating a reference to a value
+%in Rust is called borrowing. A reference to a value may be created and passed
+%in to a function that uses it in some way, and that function does not need to
+%thread the ownership of that variable back to the caller.
+%\begin{lstlisting}[nolol, label={lst:rustScope}]
+%// instead of passing value1 and value2 in by value, create references to values
+%fn foo(value1: &Bar, value2: &Bar) -> u32 {
+%    // do stuff with value1 and value2 and return the answer
+%    123
+%}
+%\end{lstlisting}
+%There are two kinds of borrows: immutable and mutable. There may be many
+%immutable borrows of a resource at once or a single mutable borrow. This also
+%prevents heap data from being accessed at the same time at different points in
+%the program. The scope of borrow must always be shorter than that of the
+%resource which it borrows. 
+%
+%This system where resources are freed after the single owner goes out of scope,
+%as well as borrows always having shorter lifetimes than original resource
+%mean that Rust can enforce the memory safety of programs. These concepts are
+%built into the type system.
+%
+%\section{Representing Programs as Data Structures}
+%talk about ASTs here
+%
+%\section{Type checking}
+%talk about ast tree traversal
