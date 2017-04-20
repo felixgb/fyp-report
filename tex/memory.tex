@@ -139,16 +139,16 @@ prematurely destroyed. For example:
 
 In this example space is allocated which is pointed to by \lstinline{p}. Once
 this storage is free, space is allocated for \lstinline{q}. The space allocated
-for \lstinline{q} might be the same space that was originally allocated for \lstinline{p}.
-When \lstinline{p} is freed again, \lstinline{q} might be accidentally destroyed.
-Any future attempt to use \lstinline{q} again after this would result in undefined
-behaviour.
+for \lstinline{q} might be the same space that was originally allocated for
+\lstinline{p}.  When \lstinline{p} is freed again, \lstinline{q} might be
+accidentally destroyed.  Any future attempt to use \lstinline{q} again after
+this would result in undefined behaviour.
 
 \section{Potential Solutions}
 Several design patterns and technologies have been developed for tackling the
-dynamic memory management issues described in Section~\ref{sec:problems}.
-This section attempts to describe some of these techniques, while noting why
-they may not an ideal solution.
+dynamic memory management issues described in Section~\ref{sec:problems}.  This
+section attempts to describe some of these techniques, while noting why they
+may not an ideal solution.
 
 \subsection{Garbage Collection}
 Garbage refers to heap allocated storage that is no longer reachable by the
@@ -208,125 +208,80 @@ and destruction.
 
 Lifetimes can be used for resource management, which is the essence of of the
 RAII idiom. Resources are allocated when an object is created, and deallocated
-when an object is destructed. An object's lifetime may be tied to it's
-enclosing scope, and in this way resources may be freed when an object goes out
-of scope.  In this manner resources will always be deallocated when an object
-goes out of scope, effectively solving dangling issues related to dangling
-pointers~\cite{rust}.
+when an object is destructed. An object's lifetime may be tied to its enclosing
+scope, and in this way resources may be freed when an object goes out of scope.
+Resources will be freed even the case of exceptions causing a function to exit
+early.In this manner resources will always be deallocated when an object goes
+out of scope, effectively solving dangling issues related to dangling
+pointers~\cite{rust}. 
 
+Becuase resources allocation and deallocation is tied to function scope, ...
 
-%Memory safety can still be achieved without the use of a garbage collectors.
-%Program structure may be analysed during semantic checking and areas likely to
-%cause issue can be identified. Here Rust's way of performing these checks is
-%examined.
+RAII is not enforced in some lanagauge, i.e.\ not all resources are 
 
-%
-%most programming languages.  Expressions may be evaluated and stored in memory
-%for use at a later point. This operation is called allocation,  The variable may then be used in another expression
-%at a later point. Specifically, the \textit{heap} refers to an area
-%of memory that is set aside for dynamic allocation. Usually areas of memory
-%stored here can be allocated, dereferencd, and freed at any point in a program.
-%
-%
-%\section{Problems with Existing Memory Management Techniques}
-%Most programming languages allow for dynamic memory management where the
-%program can request portions of memory at run time and free that memory when it
-%is no longer required. This operation can be performed manually as in the case
-%of languages such as C or automatically in languages with a garbage collector
-%such as Java.
-%
-%\subsection{Manual Memory Management: \lstinline{malloc} and \lstinline{free}}
-%Some languages rely on manual instructions inserted by the programmer in order
-%to allocate and deallocate regions of memory. Most implementations of the C
-%programming language provide a group of library functions for this purpose,
-%which include \lstinline{malloc} and \lstinline{free}. As mentioned, these
-%constructs are insert manually by the programmer. This can lead to the issues
-%described below.
-%
-%In the Rust programming language, references to values must live longer than
-%the resource that they refer to~\cite{rust-borrowing}. The same program as the 
-%C dangling pointer example (Listing~\ref{lst:cdangle}) written in Rust does not
-%compile as it does not meet this restriction.
-%
-%\lstinputlisting[
-%    caption={A Rust program that does not type check.}
-%]{codeexamples/dangle.rs}
-%
-%\subsection{An Introduction to Rust's Model of Memory Management}
-%Rust, a systems programming language~\cite{rust} is designed to provide memory
-%safety with no runtime overhead. Rather than relying on a garbage collector to
-%provide run-time memory safety, Rust relies on strong compile time checks.
-%This system of compile time checks is referred to as \textit{ownership}, and is
-%derived from affine type systems and unique pointers to memory
-%locations\cite{rust-borrowing} \cite{levy2015ownership}.
-%
-%\subsubsection{Affine types}
-%Affine types are a development of Linear type systems. Linear type systems
-%ensure that every variable is used exactly once. In an affine type system, a
-%variable may be used at most once, i.e.\ zero or one times. This has applications
-%for managing resources in a program that do not persist the whole time that the
-%program is running, e.g.\ file handles or heap allocated memory \cite{attapl}
-%\cite{tovAffine}.
-%
-%\subsubsection{Ownership}\label{sec:regions}
-%Values in Rust are bound to a single \textit{owner}, which is the variable to
-%which it is bound. When the owning variable goes out of scope, the value is
-%freed. For example:
-%\begin{lstlisting}[nolol, label={lst:rustScope}]
-%{
-%    let x = 69;
-%}
-%\end{lstlisting}
-%When \lstinline{x} goes out of scope the value associated with it will also be
-%released from memory. Because there can only be a single owner associated with
-%a value, aliasing a variable is not allowed. This prevents any two parts
-%of a Rust program from accessing a section of heap memory at the same time.
-%\begin{lstlisting}[nolol, label={lst:rustScope}]
-%{
-%    let x = Thing::new();
-%    let y = x;
-%    println("()", x);
-%}
-%\end{lstlisting}
-%The above code does not compile because \lstinline{x} has been moved to
-%\lstinline{y}, and there is an attempt to use \lstinline{x} in the print
-%statement. Using a variable as a function argument will also make it not
-%available for use again. If a function uses some value that has been passing in
-%as a argument it must return that same value if the scope outside that
-%function uses it.
-%\begin{lstlisting}[nolol, label={lst:rustScope}]
-%// value is comes from outside the scope of this function
-%fn foo(value: Bar) -> Bar {
-%    // do stuff with value, returning it and hence handing back ownership
-%    value
-%}
-%\end{lstlisting}
-%This is not practical, and gets even less practical once there are more
-%arguments that must be passed back to the caller of the function. To this end
-%Rust allows references to a value to be created. Creating a reference to a value
-%in Rust is called borrowing. A reference to a value may be created and passed
-%in to a function that uses it in some way, and that function does not need to
-%thread the ownership of that variable back to the caller.
-%\begin{lstlisting}[nolol, label={lst:rustScope}]
-%// instead of passing value1 and value2 in by value, create references to values
-%fn foo(value1: &Bar, value2: &Bar) -> u32 {
-%    // do stuff with value1 and value2 and return the answer
-%    123
-%}
-%\end{lstlisting}
-%There are two kinds of borrows: immutable and mutable. There may be many
-%immutable borrows of a resource at once or a single mutable borrow. This also
-%prevents heap data from being accessed at the same time at different points in
-%the program. The scope of borrow must always be shorter than that of the
-%resource which it borrows. 
-%
-%This system where resources are freed after the single owner goes out of scope,
-%as well as borrows always having shorter lifetimes than original resource
-%mean that Rust can enforce the memory safety of programs. These concepts are
-%built into the type system.
-%
-%\section{Representing Programs as Data Structures}
-%talk about ASTs here
-%
-%\section{Type checking}
-%talk about ast tree traversal
+\section{Region based memory management}
+
+\subsubsection{Affine types}
+Affine types are a development of Linear type systems. Linear type systems
+ensure that every variable is used exactly once. In an affine type system, a
+variable may be used at most once, i.e.\ zero or one times. This has
+applications for managing resources in a program that do not persist the whole
+time that the program is running, e.g.\ file handles or heap allocated memory
+\cite{attapl} \cite{tovAffine}.
+
+\subsubsection{Ownership}\label{sec:regions}
+Values in Rust are bound to a single \textit{owner}, which is the variable to
+which it is bound. When the owning variable goes out of scope, the value is
+freed. For example:
+\begin{lstlisting}[nolol, label={lst:rustScope}]
+{
+    let x = 69;
+}
+\end{lstlisting}
+When \lstinline{x} goes out of scope the value associated with it will also be
+released from memory. Because there can only be a single owner associated with
+a value, aliasing a variable is not allowed. This prevents any two parts
+of a Rust program from accessing a section of heap memory at the same time.
+\begin{lstlisting}[nolol, label={lst:rustScope}]
+{
+    let x = Thing::new();
+    let y = x;
+    println("()", x);
+}
+\end{lstlisting}
+The above code does not compile because \lstinline{x} has been moved to
+\lstinline{y}, and there is an attempt to use \lstinline{x} in the print
+statement. Using a variable as a function argument will also make it not
+available for use again. If a function uses some value that has been passing in
+as a argument it must return that same value if the scope outside that
+function uses it.
+\begin{lstlisting}[nolol, label={lst:rustScope}]
+// value is comes from outside the scope of this function
+fn foo(value: Bar) -> Bar {
+    // do stuff with value, returning it and hence handing back ownership
+    value
+}
+\end{lstlisting}
+This is not practical, and gets even less practical once there are more
+arguments that must be passed back to the caller of the function. To this end
+Rust allows references to a value to be created. Creating a reference to a value
+in Rust is called borrowing. A reference to a value may be created and passed
+in to a function that uses it in some way, and that function does not need to
+thread the ownership of that variable back to the caller.
+\begin{lstlisting}[nolol, label={lst:rustScope}]
+// instead of passing value1 and value2 in by value, create references to values
+fn foo(value1: &Bar, value2: &Bar) -> u32 {
+    // do stuff with value1 and value2 and return the answer
+    123
+}
+\end{lstlisting}
+There are two kinds of borrows: immutable and mutable. There may be many
+immutable borrows of a resource at once or a single mutable borrow. This also
+prevents heap data from being accessed at the same time at different points in
+the program. The scope of borrow must always be shorter than that of the
+resource which it borrows. 
+
+This system where resources are freed after the single owner goes out of scope,
+as well as borrows always having shorter lifetimes than original resource
+mean that Rust can enforce the memory safety of programs. These concepts are
+built into the type system.
