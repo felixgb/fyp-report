@@ -37,6 +37,8 @@ used when some value needs to be alive for a longer than a single function's
 execution. However this memory cannot be predictably allocated and deallocated.
 Programming languages have several strategies for managing heap memory.
 
+
+\subsubsection{Basic Operations}\label{sec:operations}
 The basic operations needed in a system with memory allocation are:
 \begin{description}[style=nextline]
     \item[Allocation]
@@ -194,7 +196,7 @@ not come without cost. Some issues are:
 Because of these issues, use of a garbage collected language is not always the
 correct decision.
 
-\subsection{Resource Acquisition is Initialization}
+\subsection{Resource Acquisition is Initialization}\label{sec:raii}
 Resource Acquisition Is Initialization, or RAII, is a technique, not a
 technology, which connects the lifetime of a resource, such as heap memory, to
 the lifetime of an object~\cite{cppref}. It is a way of managing dynamically
@@ -207,18 +209,36 @@ programming to refer to the length of time that between an object's creation
 and destruction. 
 
 Lifetimes can be used for resource management, which is the essence of of the
-RAII idiom. Resources are allocated when an object is created, and deallocated
-when an object is destructed. An object's lifetime may be tied to its enclosing
-scope, and in this way resources may be freed when an object goes out of scope.
+RAII idiom. Lifetimes refer to the duration that an object is usable for.
+Resources are allocated when an object is created, and deallocated when an
+object is destructed. An object's lifetime may be tied to its enclosing scope,
+and in this way resources may be freed when an object goes out of scope.
 Resources will be freed even the case of exceptions causing a function to exit
-early.In this manner resources will always be deallocated when an object goes
+early. In this manner resources will always be deallocated when an object goes
 out of scope, effectively solving dangling issues related to dangling
 pointers~\cite{rust}. However, it is still a problem if these ideas are not
-enforced.
+enforced by the programming language as part of the type system. Programmers
+may forget to implement these ideas or may not be aware of them. However, some
+of these ideas can be statically checked by a type checker.
 
-RAII is not enforced in some language, i.e.\ not all resources have a clear
-owner. There is no way to enforce this in the type system
-enforce this in the type system \\
+\section{Enforcing Memory Safety in the Type System}
+The idea that all resources have an owner is key. This is the core concept
+from~\ref{sec:raii}: if a resource's existence is tied to an scoped variable
+then the resource can be deallocated when that variable goes out of scope.  If
+any given resource is associated with a \textit{single} variable then there is
+no way of loosing track of it. In order for this system to work them no memory
+must be aliasable, which is should not be because all resources are tied to a
+single owner.
+
+\subsection{Ownership and Affine Type Systems}
+Affine types are a development of Linear type systems. Linear type systems
+ensure that every variable is used exactly once. \cite{ownership} In an affine type system, a
+variable may be used at most once, i.e.\ zero or one times. This has
+applications for managing resources in a program that do not persist the whole
+time that the program is running, e.g.\ file handles or heap allocated memory
+
+This relates to the concept of ownership. How?
+\cite{attapl} \cite{tovAffine}.
 
 lifetime notes: \\
 the duration of a thing's usefulness \\
@@ -249,17 +269,9 @@ always have a clear owner (single owner) so you know when to free it \\
 
 Useful because there is no runtime \\
 
-\section{Region based memory management}
+\section{Introducing Rust}
 
-\subsubsection{Affine types}
-Affine types are a development of Linear type systems. Linear type systems
-ensure that every variable is used exactly once. In an affine type system, a
-variable may be used at most once, i.e.\ zero or one times. This has
-applications for managing resources in a program that do not persist the whole
-time that the program is running, e.g.\ file handles or heap allocated memory
-\cite{attapl} \cite{tovAffine}.
-
-\subsubsection{Ownership}\label{sec:regions}
+\subsection{Ownership}\label{sec:regions}
 Values in Rust are bound to a single \textit{owner}, which is the variable to
 which it is bound. When the owning variable goes out of scope, the value is
 freed. For example:
