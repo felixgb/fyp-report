@@ -24,8 +24,6 @@ system for modelling abstract behaviour.
 reason about type systems. The lambda calculus can be viewed as a miniature
 programming language and a system where strict properties can be proved.
 
-
-
 \begin{figure}[H]\label{fig:lambdaCalc}
     \begin{tabular}{l c p{3cm} r}
         \texttt{t} & $ ::= $ & $ x $ &                   variables \\
@@ -41,6 +39,19 @@ In order to demonstrate how the lambda calculus can be used to reason about
 type systems, some additional constructs added. If Boolean literals some other
 concepts are added it becomes more clear how types are useful in programming
 languages.
+
+Assignment, allocation, and dereferencing are all incorporated into the language.
+These operations follow the description given in Section~\ref{sec:operations}.
+
+\subsubsection{Unit}
+We need some way to talk about operations that do not have any clear result
+themselves, but instead operate with side effects. The most obvious example in
+this case is the assignment operation, which operates on the store by inserting
+or modifying variable bindings. None of the types we have seen so far would
+make any sense to type this statement so a new type is introduced: the
+\lstinline{Unit} type.  Therefore, any operation that is executed for its side
+effects has type \lstinline{Unit}.
+
 
 \begin{figure}[H]\label{fig:simpleCalc}
     \vspace{1cm}
@@ -79,20 +90,63 @@ baddef = if $ \lambda x : Bool . x $ then $ false $  else $ true $
 \end{lstlisting}
 
 This program is constructed according to the grammar of terms. However, is not
-well typed according to the typing rules in Figure~\ref{fig:simpleType}. \Note{make this diagram}
-Specifically, the type of the term found in the guard of the if-expression,
-\lstinline[mathescape]{$ \lambda x : Bool . x $} has type
+well typed according to the typing rules in Figure~\ref{fig:simpleCalc}.
+\Note{make this diagram} Specifically, the type of the term found in the guard
+of the if-expression, \lstinline[mathescape]{$ \lambda x : Bool . x $} has type
 \lstinline[mathescape]{$ Bool \rightarrow Bool $} but has to be
-\lstinline[mathescape]{$ Bool $} for the term to be considered well typed.
-It makes sense to restrict the sorts of values found in the guard of an if-then-else
-expression. Anything other than a boolean value in that place may indicate
-programmer error, which could be as simple as a spelling mistake or a fundamental
-misunderstanding of what they are trying to express. Type systems help catch
-these kind of mistakes before program execution. Specifying these rules on top
-of the lambda calculus can be a very informative way of looking at programming
-language features. The rest of this chapter describes other extensions to the
-lambda calculus that model some of the programming concepts investigated in
-this report.
+\lstinline[mathescape]{$ Bool $} for the term to be considered well typed.  It
+makes sense to restrict the sorts of values found in the guard of an
+if-then-else expression. Anything other than a boolean value in that place may
+indicate programmer error, which could be as simple as a spelling mistake or a
+fundamental misunderstanding of what they are trying to express. Type systems
+help catch these kind of mistakes before program execution. Specifying these
+rules on top of the lambda calculus can be a very informative way of looking at
+programming language features. The rest of this chapter describes other
+extensions to the lambda calculus that model some of the programming concepts
+investigated in this report.
+
+\subsection{Lambda Calculus with Dynamic Memory Allocation}
+In order to study a system guaranteeing memory safety, we first need a language
+that allows for dynamic memory allocation. This language can be built on top of
+the simply typed lambda calculus. 
+
+\begin{figure}[H]\label{fig:simpleCalc}
+    \vspace{1cm}
+    \textbf{Terms} \\
+    \begin{tabular}{l c p{3cm} r}
+        \texttt{t} & $ ::= $ & $ x $ &                   variables \\
+      & $ | $ & $ \lambda x : $ \texttt{T} . \texttt{t} &          function abstraction, with type annotations \\
+      & $ | $ & $ true $ &          true literal \\
+      & $ | $ & $ false $ &          false literal \\
+      & $ | $ & $ unit $ &          unit constant \\
+      & $ | $ & ref \texttt{t} &    reference creation \\
+      & $ | $ & !\texttt{t} &    dereference operation \\
+      & $ | $ & \texttt{t} $ := $ \texttt{t} &    assignment \\
+      & $ | $ & $ l $ &    heap pointer \\
+      & $ | $ & if \texttt{t} then \texttt{t} else \texttt{t}  &          if-then-else expression \\
+      & $ | $ & \texttt{t} \texttt{t} &          function application \\
+    \end{tabular}
+
+    \vspace{1cm}
+    \textbf{Values} \\
+    \begin{tabular}{l c p{3cm} r}
+        \texttt{v} & $ ::= $ & $ \lambda x : $ \texttt{T} . \texttt{t} &                   lambda value \\
+      & $ | $ & $ true $ &          true literal value \\
+      & $ | $ & $ false $ &          false literal value \\
+      & $ | $ & $ l $ &          heap pointer value \\
+    \end{tabular}
+
+    \vspace{1cm}
+    \textbf{Types} \\
+    \begin{tabular}{l c p{3cm} r}
+        \texttt{T} & $ ::= $ & \texttt{T} $ \rightarrow $ \texttt{T} &      type of functions \\
+      & $ | $ & $ Bool $ &          type of boolean literals \\
+      & $ | $ & $ Unit $ &          unit type \\
+      & $ | $ & $ Ref $ \texttt{T} &          type of reference cells \\
+    \end{tabular}
+
+    \caption{Lambda Calculus expanded with dynamic memory allocation}
+\end{figure}
 
 \subsection{System F}\label{sec:systemF}
 System F is an extension of the simply typed lambda calculus \cite{tapl} that

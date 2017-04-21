@@ -1,4 +1,4 @@
-\chapter{Memory Management}\label{sec:motivation} 
+\chapter{Memory Management}\label{sec:memory} 
 Part of this project is designing a compile time system for memory management.
 Before describing how this system should work, an overview of existing memory
 management techniques is given. Most programming languages have the ability to
@@ -213,11 +213,41 @@ scope, and in this way resources may be freed when an object goes out of scope.
 Resources will be freed even the case of exceptions causing a function to exit
 early.In this manner resources will always be deallocated when an object goes
 out of scope, effectively solving dangling issues related to dangling
-pointers~\cite{rust}. 
+pointers~\cite{rust}. However, it is still a problem if these ideas are not
+enforced.
 
-Becuase resources allocation and deallocation is tied to function scope, ...
+RAII is not enforced in some language, i.e.\ not all resources have a clear
+owner. There is no way to enforce this in the type system
+enforce this in the type system \\
 
-RAII is not enforced in some lanagauge, i.e.\ not all resources are 
+lifetime notes: \\
+the duration of a thing's usefulness \\
+every reference has a lifetime as part of its type \\
+references cannot be used outside of this lifetime \\
+the time in which some thing is executing \\
+use lifetimes to think about when things are occurring simultaneously \\
+lifetimes also solve returning pointer into stack to caller function,
+borrow of a resource cannot live past the length of the original resource
+
+Becuase resources allocation and deallocation is tied to function scope, ... \\
+
+danger from 1. aliasing and 2. mutation \\
+
+aliasing hide dependencies \\
+
+three things: ownership, shared imm references, and mut references \\
+
+if a resource has no owner, you can free automatically. \\
+memory is freed when reference count drops to zero \\
+
+borrowing: you don't want to give ownership, but someone else can use it for \\
+while
+
+all memory has a clear owner \\
+
+always have a clear owner (single owner) so you know when to free it \\
+
+Useful because there is no runtime \\
 
 \section{Region based memory management}
 
