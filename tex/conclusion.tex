@@ -1,8 +1,17 @@
-\chapter{Conclusion}\label{sec:conclusion}
-
-\section{Further Work}
+\chapter{Conclusion and Further Work}\label{sec:conclusion}
 This section covers ideas that should be implemented in order to make the
 lanagauge more useful to reason about how these type systems interact.
+
+\section{Alternatives to Full Higher Kinded Types}
+Full higher kinded types in Rust may not be necessary to get the benefits
+commonly associated with this feature. An alternative proposition involves
+adding type constructors to \textit{traits}, which would be known as
+\textit{associated type constructors} \cite{rfc1598}. Rust already includes an
+mechanism for associating types with traits, so expanding this feature to
+include type constructors as well seems like a more natural extension than full
+higher kinded types, as seen in other languages like Haskell. This section
+investigates this idea and attempts to define some high level generic constructs
+using only the proposed idea of Associated Type Constructors.
 
 \subsection{Traits}
 Haskell's typeclasses are key in expressing useful high level concepts like
@@ -22,7 +31,7 @@ implementing generic interfaces for containers (such as Functor, from
 Chapter~\ref{sec:poly}) some additional concepts are needed. Examples are given
 in Rust.
 
-\subsubsection{Associated Types}
+\subsection{Associated Types}
 Associated types refer to types that may be defined in a trait, and used by
 methods that are defined by that trait. This example from the Rust
 documentation \cite{assoctypes} illustrates this concept.
@@ -78,17 +87,353 @@ fn distance<G: Graph>(graph: &G, start: &G::N, end: &G::N) -> u32 {
 This function signature, as well as being more brief, also makes it very clear
 that the node and edges types are associated with the graph type. 
 
-\subsubsection{Iterator}
-With an extension
+Associated types define types that are part of an interface. Note that in the
+current version of Rust, associated types may only be of kind \lstinline{*},
+i.e.\ they may not be type constructors. Expanding associated types to include
+type constructors may have some interesting benefits, commonly associated with
+full higher kinded types \cite{niko}.
 
-\subsection{Lifetime Elision}
-Lifetime elision means that lifetimes can be omitted in cases where they are
-obvious from their context of use. Type signatures often do not need to be
-annotated with types because default options can be assumed that agree with
-what the programmer is trying to express. It is a separate concept from
-inference. Elision significantly cuts down the amount a programmer has to write
-and reduces unneeded information. Manual lifetime annotations such as found in
-this project are not very practical for general programming.
+\subsection{Iterators and Generic Collections}
+There are several motivations for including associated type constructors.
+
+\subsubsection{Iterators}
+Iterators allow programmers to traverse containers in a safe, generic manner.
+They are an alternative accessing an collection with indexing operations and
+are more suited to traversing collections that do not provide effective random
+access, like lists or trees. Many types of collection may provide iterators and
+so providing an iterator interface makes code more generic by not associating
+operations on collections with the implementation of those operations.
+
+In Rust, a trait that describes what operations an iterator should provide can
+be written like:
+
+\begin{lstlisting}[nolol]
+trait Iterator {
+    type Item;  // Associated type item describes what type the iterator will return
+    fn next(&mut self) -> Option<Self::Item>;
+}
+\end{lstlisting}
+
+The method defined here, \lstinline{next}, says that any class that implements
+this trait must define how collection elements are accessed. Elements of type
+\lstinline{Item} that are held by a collection are returned when there are more
+elements to access. 
+
+\subsubsection{Attempting to Define Generic Collections}
+Making \lstinline{Iterator} a trait would allow code to be written that can
+separate the logic of using elements of a collection from the implementation of
+how those elements are accessed. To expand on this idea, it would be useful to
+have an interface for all types of collections that provide a few key
+operations. If this could be done, it would further separate implementation
+details from logic of using collections. This would facilitate code reuse and
+allow code to be swapped out or replaced more easily because the collection we
+wanted to use would only have to conform to a given interface, or trait.  One
+of the key methods that the trait would provide would be some way of accessing
+elements of the collection in a generic way, probably using iterators.  It
+might look something like:
+
+\begin{lstlisting}[nolol]
+trait Collection<T> {
+    // Create an empty collection of type T
+    fn empty() -> Self;
+
+    // Add an element of type T to this collection. For linked lists, it might
+    // prepend to the collection, for sets it might insert, etc
+    fn add(&mut self, value: T);
+
+    type Iter: Iterator<T>;     // An iterator for this collection would also
+                                // be of type T, becuase it would reference
+                                // a single element of this collection at one
+                                // time
+
+    // Get a reference to an iterator of this collection so you can do things
+    // with the elements of this collection by calling the next method defined
+    // in the Iterator interface
+    fn iterate(&self) -> Self::Iter;
+}
+\end{lstlisting}
+
+Now we can try and define a collection that implements all of the operations
+described in this trait. Here's what a minimalistic linked list might look like
+in Rust:
+
+\begin{lstlisting}[nolol]
+pub struct List<T> {
+    cell: Option<Box<ListCell<T>>
+}
+
+struct ListCell<T> {
+    value: T,
+    next: List<T>
+}
+\end{lstlisting}
+
+Some methods can be implemented for this collection:
+
+\begin{lstlisting}[nolol]
+impl<T> List<T> {
+    pub fn new() -> List<T> {
+        List { cell: None }
+    }
+    
+    pub fn prepend(&mut self, value: T) {
+        // Prepend an element to this collection...
+    }
+    
+    pub fn iter<'iter>(&'iter self) -> ListIter<'iter, T> {
+        ListIter { cursor: self }
+    }
+}
+
+// Define a list iterator that does what an iterator should, specifically for
+// lists.
+pub struct ListIter<'iter, T> {
+    cursor: &'iter List<T>
+}
+
+impl<'iter, T> Iterator for ListIter<'iter, T> {
+    // Here the Item associated type is instantiated, from the Iterator trait
+    // Note that the item is a reference to an element T, that lives for the
+    // lifetime 'iter
+    type Item = &'iter T;
+    fn next(&mut self) -> Option<&'iter T> {
+            // return a Option with type T, which is a reference to an element
+            // in the collection, or the same type as Item
+        }
+    }
+}
+\end{lstlisting}
+
+This implementation of an iterator for a list returns a reference to an
+\lstinline{Item} from the list. \lstinline{Item} needs to have a lifetime
+because any method that uses an element from this collection needs to know how
+long the collection lives for. A reference to an element in the collection
+could not be used after the collection itself has been deallocated. It does not
+matter what the type of that element is though, only that it lives long enough.
+\lstinline{ListIter} takes a lifetime parameter accordingly.
+
+\lstinline{List} should implement \lstinline{Collection}, because it obeys
+all the rules for this trait. Other types, such as trees or different types of
+list could also implement \lstinline{Collection}. Here we try and define the
+implementation of \lstinline{Collection} for \lstinline{List}:
+
+\begin{lstlisting}[nolol]
+impl<T> Collection<T> for List<T> {
+    fn empty() -> List<T> {
+        List::new()
+    }        
+
+    fn add(&mut self, value: T) {
+        self.prepend(value);
+    }
+    
+    fn iterate<'iter>(&'iter self) -> ListIter<'iter, T> {
+        self.iter()
+    }
+    
+    // This will not compile because there is no reference to the lifetime 
+    // of the type in the generic collection. The Collection interface does
+    // not provide a way of accessing the lifetime of a object associated with
+    // a collection that lives for a certain length of time. 
+    type Iter = ListIter<'iter, T>;
+}
+\end{lstlisting}
+
+There is a large problem in this implementation. A collection contains elements
+of type \lstinline{T}, and provides access to an iterator that should allow
+access to those elements. In the case of \lstinline{List}, \lstinline{Iterator}
+returns a reference to the element which lives for the same length of time as
+the whole collection. This is problematic though because there is no way to
+reference the lifetime of a collection in the trait above.
+
+This shows how modelling a generic collections interface can be difficult. In
+the case of \lstinline{Iterator}, the lifetime of the element could be passed
+in to the instance of the trait. This cannot be done with the implementation of
+\lstinline{Collection}. Specifically, \lstinline{List<T>} does not provide
+enough information to instantiate \lstinline{ListIter<'iter, T>}.
+
+\subsubsection{Associated Type Constructors}
+To solve this problem, the type of the item that the iterator returns needs to
+be associated with a lifetime. Being able to include type constructors in classes
+as well as concrete types would allow this. For example:
+
+\begin{lstlisting}[nolol]
+trait Collection<T> {
+    fn empty() -> Self;
+    fn add(&mut self, value: T);
+
+    // The type of Iter is now parametrized with the lifetime of the element
+    // that it contains
+    type Iter<'iter>: Iterator<T>;
+    fn iterate<'iter>(&'iter self) -> Self::Iter<'iter>;
+}
+\end{lstlisting}
+
+Now \lstinline{Iter} is a type constructor rather than a concrete type, and must
+be instantiated with a concrete type before it is used. As a brief aside,
+lifetime variables are actually another \textit{kind} in Rust:
+\begin{figure}[H]
+    \vspace{1cm}
+    \textbf{Kinds} \\
+    \begin{tabular}{l c p{3cm} r}
+        \texttt{K} & $ ::= $ & $ * $ &      kind of concrete types \\
+        & $ | $ & $ lifetime $ &            kind of lifetimes  \\
+        %& $ | $ & \texttt{K} $ \rightarrow $ \texttt{K} &            kind of type operators
+    \end{tabular}
+    \caption{Kinds in Rust}
+\end{figure}
+
+This can be seen when passing polymorphic type arguments to functions in Rust.
+For example:
+
+\begin{lstlisting}[nolol]
+fn foo<'a, T>(x: &'a T) -> u32 {
+    // do stuff
+}
+\end{lstlisting}
+
+This function takes a polymorphic lifetime argument and a type arguments.
+\lstinline{Iter<'iter>} is a type constructor, or function at the level of
+types, and hence has kind \lstinline[mathescape]{lifetime -> *}.
+
+With associated type constructors, the collection implementation for \lstinline{List}
+could look like:
+
+\begin{lstlisting}[nolol]
+impl<T> Collection<T> for List<T> {
+    // same methods as before
+
+    type Iter<'iter> = ListIter<'iter, T>;
+    // Use of iter now must be parameterized by a lifetime, which can be used
+    // by ListIter. Information can now be generically passed through.
+}
+\end{lstlisting}
+
+This solves the problem of how to get the lifetime information to
+\lstinline{ListIter}. Methods can now be written that are generic over
+collections:
+
+\begin{lstlisting}[nolol]
+fn add_one<C>(xs: &C) -> C
+    where C: Collection<u32>
+{
+    let mut xs_plus_ones = C::empty();  // Collection trait defines empty
+    for &x in xs.iterate() {            // xs is a collection, which defines iterate
+        xs_plus_ones.add(f + 1);
+    }
+    xs_plus_ones
+}
+\end{lstlisting}
+
+This function could operate over trees, lists, sets, or anything else that
+operates over a collection. This is very useful, however there are still
+problems with this approach. In Chapter~\ref{sec:poly}, we tried to implement
+\lstinline{Functor}, or an interface for a container that only provided one
+method, \lstinline{map}.  The issues arise when we try and implement a generic
+map function \lstinline{Collection}, similarly to how map was implemented for
+\lstinline{Functor} in Chapter~\ref{sec:poly}.
+
+\begin{lstlisting}[nolol]
+fn map<A, B>(f: &Fn(A) -> B, xs: &Collection<A>) -> Collection<B> {
+    let mut out = Collection<B>::empty();
+    for &x in xs.iterate() {
+        out.add(f(x));
+    }
+    out
+}
+\end{lstlisting}
+
+The problem here is that this function can return \textit{any} type that
+implements collection, not the same type of collection that we called
+\lstinline{map} on. This means that there is very little that can be done with
+the result of this function, without casting or explicit annotation. This is
+especially problematic if calls to \lstinline{map} and other higher order
+functions like \lstinline{filter} are chained, which is a common idiom.
+
+Referencing Chapter~\ref{sec:poly}, what we really want to be able to do have a
+signature like:
+
+\begin{lstlisting}[nolol]
+// Note that C is defined in the type parameters for this function
+fn map<A, B, C: Collection>(f: &Fn(A) -> B, xs: &C<A>) -> C<B> {
+    // same as before
+}
+\end{lstlisting}
+
+In effect we want to say that the type parameter \lstinline{C} should itself be
+a type constructor. This constructor is referenced in the rest of the signature
+and the parameter \lstinline{xs} and the return type now have to be the same
+type of collection. However this problem can be solved without using full-blown
+higher kinded types, and instead using the associated type constructors defined
+earlier in the chapter.
+
+\subsubsection{Type Families}
+Using associated type constructors and a few extra traits, the relationship
+between the type constructor a list of parameters and the return type of a
+function can be defined. The extra traits needed are described below:
+
+\begin{lstlisting}[nolol]
+trait CollectionFamily {
+    // CollectionFamily defines one associated type constructor
+    type Member<T>: Collection<T>;
+}
+
+struct ListFamily;
+
+impl CollectionFamily for ListFamily {
+    // instantiate list families with with the type of lists holding generic
+    // elements
+    type Member<T> = List<T>;
+}
+\end{lstlisting}
+
+Family refers to the collection type without referring to its elements, e.g.\
+any type of \lstinline{List} might be a collection family. This can be used to
+implement a proper map function:
+
+\begin{lstlisting}[nolol]
+fn map_family<A, B, F: CollectionFamily>(xs: &F::Collection<A>) -> F::Collection<B> {
+    let mut out = F::Member::empty();
+    for &x in xs.iterate() {
+        out.add(f(x));
+    }
+    out
+}
+\end{lstlisting}
+
+This function can then be called with a family of types, like \lstinline{ListFamily},
+as a type parameter. The function would then take a \lstinline{List<A>} as an
+argument and return a \lstinline{List<B>}.
+
+This is one of the main motivations for including higher kinded types in a
+language.  However, lots of the benefits of higher kinded types could
+potentially be modelled by using associated type constructors. The would solve
+some problems show in Section~\ref{sec:iterators} related to lifetimes, which
+would not clearly be solved by higher kinded types alone. This system
+potentially has the other benefits.  Higher kinded traits, a la Haskell's type
+constructor classes, would not need to be implemented. These could potentially
+confuse newcomers to the language, as well as possibly making type inference
+more difficult~\cite{niko}.
+
+A future project would be to implement a language with lifetimes and type
+inference, and incorporate Rust-style traits. There would be no higher kinded
+types, in the style of Haskell, would not be built into the language. Traits
+could only be written over concrete types. Associated type constructors could
+then be added and the propositions in this section could be tested.
+
+\section{Extensions to This Project}
+Some other extensions to the lambda calculus used in this project should be
+modelled in order to better reason about the influence higher kinded types
+would have on Rust.
+
+\subsection{Lifetime Elision} Lifetime elision means that lifetimes can be omitted
+in cases where they are obvious from their context of use. Type signatures
+often do not need to be annotated with types because default options can be
+assumed that agree with what the programmer is trying to express. It is a
+separate concept from inference. Elision significantly cuts down the amount a
+programmer has to write and reduces unneeded information. Manual lifetime
+annotations such as found in this project are not very practical for general
+programming.
 
 By default in Rust, every value in a function's parameters that has a separate
 lifetime. If a function only has a single input lifetime, then that lifetime is
