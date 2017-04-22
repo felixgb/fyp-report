@@ -1,3 +1,119 @@
 \chapter{Conclusion}\label{sec:conclusion}
 
 \section{Further Work}
+This section covers ideas that should be implemented in order to make the
+lanagauge more useful to reason about how these type systems interact.
+
+\subsection{Traits}
+Haskell's typeclasses are key in expressing useful high level concepts like
+Monad, Functor, and Applicative Functors \cite{consclasses}. Traits and
+typeclasses are a way of providing a generic interface. In Rust, traits
+programming language fill a very similar role to Haskell's type classes,
+however traits may only describe concrete types, or types with kind
+\lstinline{*}. If one were to bring higher order polymorphism to a language
+like Rust then it would be essential to implement type classes, as they are
+important in leveraging the benefits of higher order polymorphism anyway. There
+might also be some difficulties in incorporating type classes into a language
+with higher order polymorphism and Rust's model of memory management.
+
+In essence, generic container objects must keep track of the lifetimes of the
+objects that they contain.  In order to understand some of the problems with
+implementing generic interfaces for containers (such as Functor, from
+Chapter~\ref{sec:poly}) some additional concepts are needed. Examples are given
+in Rust.
+
+\subsubsection{Associated Types}
+Associated types refer to types that may be defined in a trait, and used by
+methods that are defined by that trait. This example from the Rust
+documentation \cite{assoctypes} illustrates this concept.
+
+Suppose that we wanted a trait to describe a graph, with generic node and edge
+type:
+
+\begin{lstlisting}[nolol]
+trait Graph<N, E> {
+    // ... useful graph methods defined here
+    fn edges(&self, &N) -> Vec<E>;
+}
+\end{lstlisting}
+
+The graph has been parametrized with the types \lstinline{N} for the type of 
+nodes and \lstinline{E} for the type of edges. While this works well for operating
+over a generic graph it is a bit cumbersome. For example, if we wanted to write
+functions in Rust that operate over \lstinline{Graph} we would have to write:
+
+\begin{lstlisting}[nolol]
+fn distance<N, E, G: Graph<N, E>>(graph: &G, start: &N, end: &N) -> u32 {
+    // ... distance implementation
+}
+\end{lstlisting}
+
+There are quite a few type parameters in this function signature and it impedes
+understanding. In particular, it is not clear that \lstinline{N} and
+\lstinline{E} are associated with \lstinline{Graph}. \lstinline{distance} does
+need to reference these types in its signature, though. To solve this issue
+Rust introduces associated types. These are illustrated in a this revised 
+\lstinline{Graph} example:
+
+\begin{lstlisting}[nolol]
+trait Graph {
+    type N;     // type of nodes
+    type E;     // type of edges
+
+    fn edges(&self, &Self::N) -> Vec<Self::E>;  // Self references this trait
+}
+\end{lstlisting}
+
+Note that the trait now has type definitions included in its definition. Graph
+no longer takes type parameters, but does still reference the generic types
+\lstinline{N} and \lstinline{E}. The signature of the \lstinline{distance}
+function that operates over this new graph looks like:
+
+\begin{lstlisting}[nolol]
+fn distance<G: Graph>(graph: &G, start: &G::N, end: &G::N) -> u32 {
+    // distance implementation
+}
+\end{lstlisting}
+
+This function signature, as well as being more brief, also makes it very clear
+that the node and edges types are associated with the graph type. 
+
+\subsubsection{Iterator}
+With an extension
+
+\subsection{Lifetime Elision}
+Lifetime elision means that lifetimes can be omitted in cases where they are
+obvious from their context of use. Type signatures often do not need to be
+annotated with types because default options can be assumed that agree with
+what the programmer is trying to express. It is a separate concept from
+inference. Elision significantly cuts down the amount a programmer has to write
+and reduces unneeded information. Manual lifetime annotations such as found in
+this project are not very practical for general programming.
+
+By default in Rust, every value in a function's parameters that has a separate
+lifetime. If a function only has a single input lifetime, then that lifetime is
+used for every output lifetime.
+
+\subsection{Type Inference}
+Type inference refers to automatically deducing types of expression rather than
+making the programmer explicitly annotate them. It is common in statically
+typed functional languages. It makes writing programs easier to write and read,
+as less space used writing down types of expressions that are obvious or can
+easily be inferred from context.
+
+However, global type inference for System F has been proved to be undecidable
+\cite{tapl} \cite{attapl}. In practice, languages like Haskell that do have
+global type inference rely on \textit{let-polymorphism}, which has proven to be
+the sweet spot between expressive power in a ease of use as a programming
+language. Lots of languages with type inference, including Rust, go down this
+route. If one were to design a language that included lifetime annotations and
+higher kinded types, type inference would probably be a good idea as the types
+of expressions and function signatures could become very large and unwieldy.
+Therefore it would make sense to include let-polymorphism.
+
+\subsection{Record Types}
+Record types, called structs in Rust, are a way of combining existing types to
+create more complex type. These more complex types can then be treated as a
+single datatype. They are commonly used to store related data and treat that
+data as a single entity.
+

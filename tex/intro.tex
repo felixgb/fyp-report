@@ -17,7 +17,8 @@ and mitigate classes of errors. Ideally, all errors would be detected before a
 program is run. To this end, type system have been developed that either
 eliminate certain classes of errors or make certain styles of bug-prone
 programming hard or impossible. While doing this, it is important that a type
-system still benefits the programmer by making the language more expressive.
+system still benefits the programmer by not getting in the way of expressing
+ideas.
 
 \subsection{Simple Types}
 Type systems are designed to help programmers reason about behaviours in the
@@ -74,11 +75,10 @@ System F $\omega$, itself a typed lambda calculus~\cite{tapl}.
 
 \section{Goals of This Project}
 A parser, type checker, and simple interpreter will all be implemented along
-with a test programs demonstrating some intended behaviours. Haskell will be
-used as the language of implementation, and is described in
-Chapter~\ref{sec:impl} along with the reasons for choosing it.  The design of
-the language is described in Section~\ref{sec:formal}.  Some of the main goals
-of this project are:
+with a test programs demonstrating some intended behaviours. The design of the
+language is described in Section~\ref{sec:formal}.  Haskell will be used as the
+language of implementation, and is described in Chapter~\ref{sec:impl} along
+with the reasons for choosing it. Some of the main goals of this project are:
 
 \begin{itemize}
     \item
@@ -111,8 +111,7 @@ Types. Memory allocation and the problems associated with it is introduced in
 Chapter~\ref{sec:memory}.  Chapter~\ref{sec:formal} then introduces the lambda
 calculus as way of reasoning about type systems. The design of the language is
 introduced by building up features from existing languages and then
-incorporating them into one final grammar.  Chapter~\ref{sec:requirements}
-formalizes what should be accomplished by the type checker to be implemented.
+incorporating them into one final grammar.  
 Software engineering issues are tackled in Chapter~\ref{sec:impl}, including
 the test framework and build system used. Key tests demonstrating desired
 behaviour are given in Chapter~\ref{sec:testing}. Issues about the
