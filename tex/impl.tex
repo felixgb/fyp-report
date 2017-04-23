@@ -72,6 +72,7 @@ data Term
     | LiLam String Term
     | LiApp Term Term
     | Lt Lifetime
+    | Pointer Lifetime Location
     deriving (Eq, Show)
 \end{lstlisting}
 
@@ -179,8 +180,8 @@ needed to be automated so that any changes in the behaviour of the program could
 be checked to make sure that they did not break any previous behaviours. Test
 programs were manually written, and then loaded from file.
 
-Testing code goes here, unit tests etc
-
+%Testing code goes here, unit tests etc
+%
 The correctness of the parser, type checker, and evaluator was tested with the
 HUnit testing framework for Haskell. This tool integrates with the stack build
 tool so that all tests can be run with a single command. Tests themselves were
