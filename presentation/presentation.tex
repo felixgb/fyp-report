@@ -1,10 +1,29 @@
 \documentclass[xcolor=dvipsnames, aspectratio=169]{beamer}
 \usepackage{helvet}
+\usepackage{sourcecodepro}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{commentcolor}{rgb}{0.51,0.58,0.57}
+\definecolor{keywordcolor}{rgb}{0.16,0.63,0.59}
+\definecolor{stringcolor}{rgb}{0.34,0.43,0.76}
 
 \beamertemplatenavigationsymbolsempty%
 
 \setbeamercolor{frametitle}{fg=Magenta,bg=Cyan!50}
 \setbeamercolor{title}{fg=Magenta,bg=Cyan!50}
+\setbeamertemplate{itemize item}{\color{Cyan}$\blacksquare$}
+\setbeamertemplate{itemize subitem}{\color{Cyan}$\blacktriangleright$}
+
+\lstset{%
+    basicstyle=\tiny\ttfamily,
+    captionpos=b,
+    xleftmargin=0.5cm,
+    showstringspaces=false,
+    commentstyle=\color{commentcolor},
+    keywordstyle=\color{keywordcolor},
+    stringstyle=\color{stringcolor}
+}
 
 \begin{document}
 
@@ -16,37 +35,151 @@
 \frame{\titlepage}
 
 \begin{frame}
-    \frametitle{Overview}
-    high level intro
+    \frametitle{This Project}
+    \begin{itemize}
+        \item The main focus was the implementation of the Type Checker
+        \item Language Design considerations
+        \item Tests!
+    \end{itemize}
 \end{frame}
 
 \begin{frame}
     \frametitle{Types}
-    types
+    Types are for more than just simple errors
+    \begin{itemize}
+        \item Polymorphism
+        \item Memory Safety
+    \end{itemize}
 \end{frame}
 
-\begin{frame}
-    \frametitle{Polymorphism}
-    it's pretty useful
+\begin{frame}[fragile]
+    \frametitle{Parametric Polymorphism}
+    Reduces code duplication, parametrizing similar code. Generics in Java are
+    an example:
+    \begin{minipage}{0.45\textwidth}
+        \begin{lstlisting}[language=Java]
+class List<T> {
+    public T getAt(int index) {
+        // get object of type T
+    }
+
+    public boolean add(T e) {
+        // add an element of type T to the list
+    }
+}
+        \end{lstlisting}
+    \end{minipage}%
+    \begin{minipage}{0.45\textwidth}
+        \begin{lstlisting}[language=Java]
+class List {
+    public Object getAt(int index) {
+        // get any sort of object!
+        // who knows what it will be.
+    }
+
+    public boolean add(Object e) {
+        // add an object to list
+    }
+}
+        \end{lstlisting}
+    \end{minipage}
+
+    This can make a language much nicer to use, and plays nicely with lots of
+    functional concepts.
 \end{frame}
 
-\begin{frame}
-    it's pretty useful
+\begin{frame}[fragile]
+    \frametitle{Higher Kinded Types}
+    Allow parametrization with type constructors as well as concrete types.
+    \begin{lstlisting}[language=Java, basicstyle=\footnotesize\ttfamily]
+interface Mappable<F<A>> {
+    F<B> map(Function<A, B> f);
+}
+    \end{lstlisting}
+    (Note: not real Java)
+    This is just one example, but lots of constructs in programming languages
+    make good use of this idea.
 \end{frame}
 
 \begin{frame}
     \frametitle{Memory Management}
-    it's pretty useful
+    It's pretty useful to be able to store and reference areas of memory.  Heap
+    memory allocation and deallocation is problematic though.
+    \begin{itemize}
+        \item Manual memory management by the programmer is a notorious source
+            of bugs
+        \item Garbage collection is slow
+    \end{itemize}
 \end{frame}
 
 \begin{frame}
+    \textit{Resource Acquisition Is Initialization}, or RAII, ties dynamically
+    allocated heap memory to the lexical lifetime of an object. Memory is freed
+    when a variable goes out of scope.
+    \begin{itemize}
+        \item If RAIIed heap memory cannot be aliased then lots of the problems
+            associated with manual dynamic allocation (dangling references,
+            memory leaks, double free) are solved. So only allow one mutable
+            reference to heap memory at any one point.
+        \item Immutable references can still be created, as long as they do
+            not live longer then the memory that they reference.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+    This idea can be enforced by a \textbf{Borrow Checker} and
+    \textbf{Lifetime Checker} at compile time as part of semantic analysis.
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Examples}
+    \begin{lstlisting}[basicstyle=\footnotesize\ttfamily]
+{
+    let x = Thing::new();       // Allocate some heap memory
+    let y = x;                  // Alias the value in x
+    println("()", x);           // x has moved into y, so can 
+                                // no longer be referenced.
+                                // This is a compile time error.
+}
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{lstlisting}[basicstyle=\footnotesize\ttfamily]
+fn foo(val1: Bar, val2: Bar) -> (u32, Bar, Bar) {
+    // do something with val1 and val2.
+    // pass back ownership, so they can still be used by the caller.
+    (123, val1, val2)   // This is pretty clunky.
+}
+
+// & denotes a borrow value. Borrows are immutable by default.
+fn foo(val1: &Bar, val2: &Bar) -> u32 {
+    // do something with val1 and val2, but cannot mutate them.
+    123
+}
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Language Design}
+    Extension of the Lambda Calculus, with higher kinded types and dynamic
+    memory allocation.
+\end{frame}
+
+\begin{frame}[fragile]
     \frametitle{Implementation}
-    it's pretty useful
+    \begin{itemize}
+        \item Haskell
+        \item \texttt{Alex} for lexing, \texttt{Happy} for parsing
+        \item \texttt{HUnit} for later language tests
+        \item Tests are mostly langauge source code.
+    \end{itemize}
+    Phases are split into parser, lifetime checker, borrow checker, 
+    type checker with higher kinds, and evaluation in some cases
 \end{frame}
 
 \begin{frame}
-    \frametitle{Testing}
-    it's pretty useful
+    \textbf{Questions?}
 \end{frame}
 
 \end{document}
